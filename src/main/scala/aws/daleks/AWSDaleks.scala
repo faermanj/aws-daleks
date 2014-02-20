@@ -8,7 +8,7 @@ object Main extends App{
 	  try{
 		new EagerRegionDalek(Region.getRegion(region)).exterminate
 	  }catch {
-	  	case e:Exception => println(s"! Could not send Dalek to region $region: ${e.getMessage} ") 
+	  	case e:Exception => println(s"! Failed to exterminate region $region: ${e.getMessage} ") 
 	  }
 	} 
 }

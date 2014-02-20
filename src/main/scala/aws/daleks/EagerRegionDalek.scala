@@ -87,18 +87,19 @@ class EagerRegionDalek(region: Region) {
       s3.deleteObject(o.getBucketName, o.getKey)
     }
 
-    case b: Bucket => {
-      println("** Exterminating Bucket " + b.getName)
-      s3.deleteBucket(b.getName)
-    }
-
-    case i: Instance => {
-      println("** Exterminating EC2 Instance" + i.getInstanceId)
+    case b: Bucket =>
       try {
-        ec2.terminateInstances(new TerminateInstancesRequest().withInstanceIds(i.getInstanceId))
+        println("** Exterminating Bucket " + b.getName)
+        s3.deleteBucket(b.getName)
       } catch {
-        case e: Exception => println("! Failed to terminate EC2 Instance" + i.getInstanceId())
+        case e: Exception => println(s"! Failed to exterminate S3 Bucket ${b.getName}: ${e.getMessage()}")
       }
+
+    case i: Instance => try {
+      println("** Exterminating EC2 Instance" + i.getInstanceId)
+      ec2.terminateInstances(new TerminateInstancesRequest().withInstanceIds(i.getInstanceId))
+    } catch {
+      case e: Exception => println("! Failed to terminate EC2 Instance" + i.getInstanceId())
     }
 
     case v: Volume => {
@@ -107,9 +108,10 @@ class EagerRegionDalek(region: Region) {
     }
 
     case db: DBInstance => {
-      println("** Exterminating RDS Database" + db.getDBInstanceIdentifier)
+      println("** Exterminating RDS Database " + db.getDBInstanceIdentifier)
       val delReq = new DeleteDBInstanceRequest
       delReq.setDBInstanceIdentifier(db.getDBInstanceIdentifier())
+      delReq.setSkipFinalSnapshot(true);
       rds.deleteDBInstance(delReq)
     }
 
@@ -119,13 +121,21 @@ class EagerRegionDalek(region: Region) {
     }
 
     case app: Application => {
-      println("** Exterminating Beanstalk Application " + app.getName)
-      beanstalk.deleteApplication(new DeleteApplicationRequest().withApplicationName(app.getName()))
+      try {
+        println("** Exterminating Beanstalk Application " + app.getName)
+        beanstalk.deleteApplication(new DeleteApplicationRequest().withApplicationName(app.getName()))
+      } catch {
+        case e: Exception => println(s"! Failed to exterminate Beanstalk Application ${app.getName}: ${e.getMessage()}")
+      }
     }
 
     case stack: Stack => {
-      println("** Exterminating CloudFormation Stack " + stack.getStackName())
-      cloudformaiton.deleteStack(new DeleteStackRequest().withStackName(stack.getStackName()))
+      try {
+        println("** Exterminating CloudFormation Stack " + stack.getStackName())
+        cloudformaiton.deleteStack(new DeleteStackRequest().withStackName(stack.getStackName()))
+      } catch {
+        case e: Exception => println(s"! Failed to exterminate Beanstalk Application ${stack.getStackName}: ${e.getMessage()}")
+      }
     }
 
     case _ => println("Can't Exterminate the Unknown")
