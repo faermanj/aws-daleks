@@ -152,8 +152,8 @@ class EagerRegionDalek(region: Region) {
   }
 
   def exterminate: Unit = {
-    stacks foreach exterminate
     apps foreach exterminate
+    stacks foreach exterminate
     instances ++
       volumes ++
       databases ++
