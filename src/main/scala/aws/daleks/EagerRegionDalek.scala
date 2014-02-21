@@ -31,6 +31,7 @@ import com.amazonaws.services.elasticmapreduce.model.Application
 import com.amazonaws.services.elasticbeanstalk.model.DeleteApplicationRequest
 import com.amazonaws.services.cloudformation.model.Stack
 import com.amazonaws.services.cloudformation.model.DeleteStackRequest
+import scala.util.Try
 
 //TODO: Laxy
 class EagerRegionDalek(region: Region) {
@@ -78,7 +79,9 @@ class EagerRegionDalek(region: Region) {
   def tables: Seq[TableName] = dynamo.listTables.getTableNames asScala
   def queues: Seq[QueueURL] = sqs.listQueues.getQueueUrls asScala
   def topics = sns.listTopics().getTopics() asScala
-  def apps = beanstalk.describeApplications.getApplications asScala
+  def apps = Try{
+    beanstalk.describeApplications.getApplications asScala 
+    }.getOrElse(List.empty)
   def stacks = cloudformaiton.describeStacks.getStacks asScala
 
   def exterminate(x: Any) = x match {
@@ -138,7 +141,7 @@ class EagerRegionDalek(region: Region) {
       }
     }
 
-    case _ => println("Can't Exterminate the Unknown")
+    case _ => println("Can't Exterminate the Unknown $_")
   }
 
   def exterminateTable(t: TableName) = {
