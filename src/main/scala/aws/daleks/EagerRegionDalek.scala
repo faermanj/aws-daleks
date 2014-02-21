@@ -32,6 +32,7 @@ import com.amazonaws.services.elasticbeanstalk.model.DeleteApplicationRequest
 import com.amazonaws.services.cloudformation.model.Stack
 import com.amazonaws.services.cloudformation.model.DeleteStackRequest
 import scala.util.Try
+import com.amazonaws.services.elasticbeanstalk.model.ApplicationDescription
 
 //TODO: Laxy
 class EagerRegionDalek(region: Region) {
@@ -43,6 +44,7 @@ class EagerRegionDalek(region: Region) {
     s3.setEndpoint(endpoint);
     lockedToRegion(s3)
   }
+
   val dynamo = lockedToRegion(new AmazonDynamoDBClient(credentials))
   val ec2 = lockedToRegion(new AmazonEC2Client(credentials))
   val rds = lockedToRegion(new AmazonRDSClient(credentials))
@@ -79,9 +81,9 @@ class EagerRegionDalek(region: Region) {
   def tables: Seq[TableName] = dynamo.listTables.getTableNames asScala
   def queues: Seq[QueueURL] = sqs.listQueues.getQueueUrls asScala
   def topics = sns.listTopics().getTopics() asScala
-  def apps = Try{
-    beanstalk.describeApplications.getApplications asScala 
-    }.getOrElse(List.empty)
+  def apps = Try {
+    beanstalk.describeApplications.getApplications asScala
+  }.getOrElse(List.empty)
   def stacks = cloudformaiton.describeStacks.getStacks asScala
 
   def exterminate(x: Any) = x match {
@@ -123,12 +125,12 @@ class EagerRegionDalek(region: Region) {
       sns.deleteTopic(t.getTopicArn())
     }
 
-    case app: Application => {
+    case app: ApplicationDescription => {
       try {
-        println("** Exterminating Beanstalk Application " + app.getName)
-        beanstalk.deleteApplication(new DeleteApplicationRequest().withApplicationName(app.getName()))
+        println("** Exterminating Beanstalk Application " + app.getApplicationName())
+        beanstalk.deleteApplication(new DeleteApplicationRequest().withApplicationName(app.getApplicationName()))
       } catch {
-        case e: Exception => println(s"! Failed to exterminate Beanstalk Application ${app.getName}: ${e.getMessage()}")
+        case e: Exception => println(s"! Failed to exterminate Beanstalk Application ${app.getApplicationName()}: ${e.getMessage()}")
       }
     }
 
@@ -141,7 +143,9 @@ class EagerRegionDalek(region: Region) {
       }
     }
 
-    case _ => println("Can't Exterminate the Unknown $_")
+    case _ => {
+      println("Can't Exterminate the Unknown ")
+    }
   }
 
   def exterminateTable(t: TableName) = {
