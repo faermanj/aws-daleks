@@ -33,11 +33,25 @@ import com.amazonaws.services.cloudformation.model.Stack
 import com.amazonaws.services.cloudformation.model.DeleteStackRequest
 import scala.util.Try
 import com.amazonaws.services.elasticbeanstalk.model.ApplicationDescription
+import org.apache.http.client.CredentialsProvider
+import com.amazonaws.auth.AWSCredentialsProvider
+import com.amazonaws.services.ec2.model.KeyPairInfo
+import com.amazonaws.services.ec2.model.DeleteKeyPairRequest
+import com.amazonaws.services.elasticache.AmazonElastiCacheClient
+import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClient
+import com.amazonaws.services.elasticache.model.CacheCluster
+import com.amazonaws.services.elasticache.model.DeleteCacheClusterRequest
+import com.amazonaws.services.elasticmapreduce.model.Cluster
+import com.amazonaws.services.elasticmapreduce.model.TerminateJobFlowsRequest
+import com.amazonaws.services.route53.AmazonRoute53Client
+import com.amazonaws.services.route53.model.ListResourceRecordSetsRequest
+import com.amazonaws.services.route53.model.ResourceRecordSet
+import com.amazonaws.services.route53.model.HostedZone
 
 //TODO: Laxy
-class EagerRegionDalek(region: Region) {
+class EagerRegionDalek(credentials: AWSCredentialsProvider, region: Region) {
   println("* Exterminating Region " + region.getName())
-  val credentials = new ClasspathPropertiesFileCredentialsProvider
+
   val s3 = {
     val s3 = new AmazonS3Client(credentials);
     val endpoint = region.getServiceEndpoint(ServiceAbbreviations.S3);
@@ -52,6 +66,8 @@ class EagerRegionDalek(region: Region) {
   val sns = lockedToRegion(new AmazonSNSClient(credentials))
   val beanstalk = lockedToRegion(new AWSElasticBeanstalkClient(credentials))
   val cloudformaiton = lockedToRegion(new AmazonCloudFormationClient(credentials))
+  val ecache = lockedToRegion(new AmazonElastiCacheClient(credentials))
+  val emr = lockedToRegion(new AmazonElasticMapReduceClient(credentials))
 
   def lockedToRegion[T <: AmazonWebServiceClient](client: T): T = {
     client.setRegion(region)
@@ -76,15 +92,23 @@ class EagerRegionDalek(region: Region) {
   def volumes = ec2.describeVolumes.getVolumes.asScala.filter {
     v => !"in-use".equals(v.getState)
   }
+  def keypairs = ec2.describeKeyPairs().getKeyPairs() asScala
 
   def databases = rds.describeDBInstances.getDBInstances asScala
   def tables: Seq[TableName] = dynamo.listTables.getTableNames asScala
   def queues: Seq[QueueURL] = sqs.listQueues.getQueueUrls asScala
-  def topics = sns.listTopics().getTopics() asScala
+  def topics = sns.listTopics.getTopics asScala
+
   def apps = Try {
     beanstalk.describeApplications.getApplications asScala
   }.getOrElse(List.empty)
+
+  
+  
   def stacks = cloudformaiton.describeStacks.getStacks asScala
+  def caches = ecache.describeCacheClusters.getCacheClusters asScala
+  def clusters = emr.listClusters.getClusters asScala
+
 
   def exterminate(x: Any) = x match {
     case o: S3ObjectSummary => {
@@ -134,14 +158,28 @@ class EagerRegionDalek(region: Region) {
       }
     }
 
-    case stack: Stack => {
+    case stack: Stack =>
       try {
         println("** Exterminating CloudFormation Stack " + stack.getStackName())
         cloudformaiton.deleteStack(new DeleteStackRequest().withStackName(stack.getStackName()))
       } catch {
         case e: Exception => println(s"! Failed to exterminate Beanstalk Application ${stack.getStackName}: ${e.getMessage()}")
       }
+
+    case k: KeyPairInfo => try {
+      println("** Exterminating KeyPair " + k.getKeyName())
+      ec2.deleteKeyPair(new DeleteKeyPairRequest(k.getKeyName()))
+    } catch {
+      case e: Exception => println(s"! Failed to exterminate KeyPair ${k.getKeyName()}: ${e.getMessage()}")
     }
+
+    case c: CacheCluster => try {
+      println("** Exterminating Cache Cluster " + c.getCacheClusterId())
+      ecache.deleteCacheCluster(new DeleteCacheClusterRequest().withCacheClusterId(c.getCacheClusterId()))
+    } catch {
+      case e: Exception => println(s"! Failed to exterminate Cache Cluster ${c.getCacheClusterId()}: ${e.getMessage()}")
+    }
+
 
     case _ => {
       println("Can't Exterminate the Unknown ")
@@ -158,9 +196,22 @@ class EagerRegionDalek(region: Region) {
     sqs.deleteQueue(new DeleteQueueRequest().withQueueUrl(q))
   }
 
+  def exterminateJobFlows(ids: Seq[String]) = try {
+    println("** Exterminating Cache Clusters " + ids.mkString(","))
+    if (! ids.isEmpty){
+	    val req = new TerminateJobFlowsRequest
+	    req.setJobFlowIds(ids asJava)
+	    emr.terminateJobFlows(req)
+    }
+  } catch {
+    case e: Exception => println(s"! Failed to exterminate Clusters ${ids.mkString(",")}: ${e.getMessage()}")
+  }
+
   def exterminate: Unit = {
     apps foreach exterminate
     stacks foreach exterminate
+    caches foreach exterminate
+    exterminateJobFlows(clusters map { _.getId() })
     instances ++
       volumes ++
       databases ++
