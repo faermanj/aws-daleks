@@ -47,6 +47,12 @@ import com.amazonaws.services.route53.AmazonRoute53Client
 import com.amazonaws.services.route53.model.ListResourceRecordSetsRequest
 import com.amazonaws.services.route53.model.ResourceRecordSet
 import com.amazonaws.services.route53.model.HostedZone
+import java.util.Properties
+import java.io.InputStreamReader
+import com.amazonaws.services.elasticbeanstalk.model.DescribeEnvironmentsRequest
+import com.amazonaws.services.elasticbeanstalk.model.EnvironmentDescription
+import com.amazonaws.services.elasticbeanstalk.model.TerminateEnvironmentRequest
+import com.amazonaws.services.elasticbeanstalk.model.EnvironmentStatus
 
 //TODO: Laxy
 class EagerRegionDalek(credentials: AWSCredentialsProvider, region: Region) {
@@ -92,23 +98,31 @@ class EagerRegionDalek(credentials: AWSCredentialsProvider, region: Region) {
   def volumes = ec2.describeVolumes.getVolumes.asScala.filter {
     v => !"in-use".equals(v.getState)
   }
-  def keypairs = ec2.describeKeyPairs().getKeyPairs() asScala
+
+  def keypairs = ec2.describeKeyPairs().getKeyPairs().asScala
 
   def databases = rds.describeDBInstances.getDBInstances asScala
   def tables: Seq[TableName] = dynamo.listTables.getTableNames asScala
   def queues: Seq[QueueURL] = sqs.listQueues.getQueueUrls asScala
   def topics = sns.listTopics.getTopics asScala
 
-  def apps = Try {
-    beanstalk.describeApplications.getApplications asScala
-  }.getOrElse(List.empty)
+  val TERMINATED = EnvironmentStatus.Terminated.toString()
+  def envs = beanstalk.describeEnvironments().getEnvironments().asScala filter { e =>    
+    ! TERMINATED.equalsIgnoreCase(e.getStatus())
+  }
 
-  
-  
+  def apps = try {
+    beanstalk.describeApplications.getApplications asScala
+  } catch {
+    case e: Exception => {
+      println("Could not fectch beanstalk applications: " + e.getMessage());
+      List.empty
+    }
+  }
+
   def stacks = cloudformaiton.describeStacks.getStacks asScala
   def caches = ecache.describeCacheClusters.getCacheClusters asScala
   def clusters = emr.listClusters.getClusters asScala
-
 
   def exterminate(x: Any) = x match {
     case o: S3ObjectSummary => {
@@ -119,13 +133,14 @@ class EagerRegionDalek(credentials: AWSCredentialsProvider, region: Region) {
     case b: Bucket =>
       try {
         println("** Exterminating Bucket " + b.getName)
+        s3.deleteBucketPolicy(b.getName())
         s3.deleteBucket(b.getName)
       } catch {
         case e: Exception => println(s"! Failed to exterminate S3 Bucket ${b.getName}: ${e.getMessage()}")
       }
 
     case i: Instance => try {
-      println("** Exterminating EC2 Instance" + i.getInstanceId)
+      println(s"** Exterminating EC2 Instance ${i.getInstanceId} on region ${region}")
       ec2.terminateInstances(new TerminateInstancesRequest().withInstanceIds(i.getInstanceId))
     } catch {
       case e: Exception => println("! Failed to terminate EC2 Instance" + i.getInstanceId())
@@ -147,15 +162,6 @@ class EagerRegionDalek(credentials: AWSCredentialsProvider, region: Region) {
     case t: Topic => {
       println("** Exterminating SNS Topic " + t.getTopicArn())
       sns.deleteTopic(t.getTopicArn())
-    }
-
-    case app: ApplicationDescription => {
-      try {
-        println("** Exterminating Beanstalk Application " + app.getApplicationName())
-        beanstalk.deleteApplication(new DeleteApplicationRequest().withApplicationName(app.getApplicationName()))
-      } catch {
-        case e: Exception => println(s"! Failed to exterminate Beanstalk Application ${app.getApplicationName()}: ${e.getMessage()}")
-      }
     }
 
     case stack: Stack =>
@@ -180,7 +186,6 @@ class EagerRegionDalek(credentials: AWSCredentialsProvider, region: Region) {
       case e: Exception => println(s"! Failed to exterminate Cache Cluster ${c.getCacheClusterId()}: ${e.getMessage()}")
     }
 
-
     case _ => {
       println("Can't Exterminate the Unknown ")
     }
@@ -197,18 +202,38 @@ class EagerRegionDalek(credentials: AWSCredentialsProvider, region: Region) {
   }
 
   def exterminateJobFlows(ids: Seq[String]) = try {
-    println("** Exterminating Cache Clusters " + ids.mkString(","))
-    if (! ids.isEmpty){
-	    val req = new TerminateJobFlowsRequest
-	    req.setJobFlowIds(ids asJava)
-	    emr.terminateJobFlows(req)
+    if (!ids.isEmpty) {
+      println("** Exterminating Clusters " + ids.mkString(","))
+      val req = new TerminateJobFlowsRequest
+      req.setJobFlowIds(ids asJava)
+      emr.terminateJobFlows(req)
     }
   } catch {
     case e: Exception => println(s"! Failed to exterminate Clusters ${ids.mkString(",")}: ${e.getMessage()}")
   }
 
+  def exterminateEnv(env: EnvironmentDescription) =
+    try {
+      val envName = env.getEnvironmentName()
+      println(s"** Exterminating Beanstalk Environment ${envName} [${env.getStatus()} ] ")
+      beanstalk.terminateEnvironment(new TerminateEnvironmentRequest()
+      	.withEnvironmentName(envName)
+      	.withTerminateResources(true))
+    } catch {
+      case e: Exception => println(s"! Failed to exterminate Beanstalk Environment ${env.getEnvironmentName()} [id: ${env.getEnvironmentId} ]: ${e.getMessage()}");
+    }
+    
+  def exterminateApp(app: ApplicationDescription) =
+    try {
+      println("** Exterminating Beanstalk Application " + app.getApplicationName())
+      beanstalk.deleteApplication(new DeleteApplicationRequest().withApplicationName(app.getApplicationName()))
+    } catch {
+      case e: Exception => println(s"! Failed to exterminate Beanstalk Application ${app.getApplicationName()}: ${e.getMessage()}")
+    }
+
   def exterminate: Unit = {
-    apps foreach exterminate
+    envs foreach exterminateEnv
+    apps foreach exterminateApp
     stacks foreach exterminate
     caches foreach exterminate
     exterminateJobFlows(clusters map { _.getId() })
