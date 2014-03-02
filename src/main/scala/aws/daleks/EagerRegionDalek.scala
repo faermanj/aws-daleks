@@ -53,6 +53,9 @@ import com.amazonaws.services.elasticbeanstalk.model.DescribeEnvironmentsRequest
 import com.amazonaws.services.elasticbeanstalk.model.EnvironmentDescription
 import com.amazonaws.services.elasticbeanstalk.model.TerminateEnvironmentRequest
 import com.amazonaws.services.elasticbeanstalk.model.EnvironmentStatus
+import com.amazonaws.services.ec2.model.InstanceState
+import com.amazonaws.services.ec2.model.StopInstancesRequest
+
 
 //TODO: Laxy
 class EagerRegionDalek(credentials: AWSCredentialsProvider, region: Region) {
@@ -140,10 +143,16 @@ class EagerRegionDalek(credentials: AWSCredentialsProvider, region: Region) {
       }
 
     case i: Instance => try {
-      println(s"** Exterminating EC2 Instance ${i.getInstanceId} on region ${region}")
+      println(s"** Exterminating EC2 Instance ${i.getInstanceId} [${i.getState.getName}] on region ${region}")
       ec2.terminateInstances(new TerminateInstancesRequest().withInstanceIds(i.getInstanceId))
     } catch {
-      case e: Exception => println("! Failed to terminate EC2 Instance" + i.getInstanceId())
+      case e: Exception => {
+        println("! Failed to terminate EC2 Instance" + i.getInstanceId())
+        if ("Running".equalsIgnoreCase(i.getState.getName())){
+          println(s"** Stopping EC2 Instance ${i.getInstanceId} [${i.getState.getName}] on region ${region}")
+          ec2.stopInstances(new StopInstancesRequest().withInstanceIds(i.getInstanceId()))
+        }
+      }
     }
 
     case v: Volume => {
