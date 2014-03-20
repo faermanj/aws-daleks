@@ -55,9 +55,13 @@ import com.amazonaws.services.elasticbeanstalk.model.TerminateEnvironmentRequest
 import com.amazonaws.services.elasticbeanstalk.model.EnvironmentStatus
 import com.amazonaws.services.ec2.model.InstanceState
 import com.amazonaws.services.ec2.model.StopInstancesRequest
+import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient
+import com.amazonaws.services.ec2.model.SecurityGroup
+import com.amazonaws.services.ec2.model.DeleteSecurityGroupRequest
+import com.amazonaws.services.elasticloadbalancing.model.DeleteLoadBalancerRequest
+import com.amazonaws.services.elasticbeanstalk.model.LoadBalancer
+import com.amazonaws.services.elasticloadbalancing.model.LoadBalancerDescription
 
-
-//TODO: Laxy
 class EagerRegionDalek(credentials: AWSCredentialsProvider, region: Region) {
   println("* Exterminating Region " + region.getName())
 
@@ -77,13 +81,16 @@ class EagerRegionDalek(credentials: AWSCredentialsProvider, region: Region) {
   val cloudformaiton = lockedToRegion(new AmazonCloudFormationClient(credentials))
   val ecache = lockedToRegion(new AmazonElastiCacheClient(credentials))
   val emr = lockedToRegion(new AmazonElasticMapReduceClient(credentials))
+  val elb = lockedToRegion(new AmazonElasticLoadBalancingClient(credentials))
 
   def lockedToRegion[T <: AmazonWebServiceClient](client: T): T = {
     client.setRegion(region)
     client
   }
 
-  def buckets = (s3.listBuckets asScala).filter { bucket =>
+  def buckets = (s3.listBuckets asScala).filter {
+    bucket => !bucket.getName().startsWith("logs")
+  }.filter { bucket =>
     val locStr = s3.getBucketLocation(bucket.getName)
     val bucketRegion = S3Region.fromValue(locStr).toAWSRegion()
     bucketRegion.equals(region)
@@ -103,6 +110,8 @@ class EagerRegionDalek(credentials: AWSCredentialsProvider, region: Region) {
   }
 
   def keypairs = ec2.describeKeyPairs().getKeyPairs().asScala
+  def secGroups = ec2.describeSecurityGroups().getSecurityGroups() asScala
+  def elbs = elb.describeLoadBalancers().getLoadBalancerDescriptions() asScala
 
   def databases = rds.describeDBInstances.getDBInstances asScala
   def tables: Seq[TableName] = dynamo.listTables.getTableNames asScala
@@ -110,8 +119,8 @@ class EagerRegionDalek(credentials: AWSCredentialsProvider, region: Region) {
   def topics = sns.listTopics.getTopics asScala
 
   val TERMINATED = EnvironmentStatus.Terminated.toString()
-  def envs = beanstalk.describeEnvironments().getEnvironments().asScala filter { e =>    
-    ! TERMINATED.equalsIgnoreCase(e.getStatus())
+  def envs = beanstalk.describeEnvironments().getEnvironments().asScala filter { e =>
+    !TERMINATED.equalsIgnoreCase(e.getStatus())
   }
 
   def apps = try {
@@ -137,6 +146,7 @@ class EagerRegionDalek(credentials: AWSCredentialsProvider, region: Region) {
       try {
         println("** Exterminating Bucket " + b.getName)
         s3.deleteBucketPolicy(b.getName())
+        
         s3.deleteBucket(b.getName)
       } catch {
         case e: Exception => println(s"! Failed to exterminate S3 Bucket ${b.getName}: ${e.getMessage()}")
@@ -148,7 +158,7 @@ class EagerRegionDalek(credentials: AWSCredentialsProvider, region: Region) {
     } catch {
       case e: Exception => {
         println("! Failed to terminate EC2 Instance" + i.getInstanceId())
-        if ("Running".equalsIgnoreCase(i.getState.getName())){
+        if ("Running".equalsIgnoreCase(i.getState.getName())) {
           println(s"** Stopping EC2 Instance ${i.getInstanceId} [${i.getState.getName}] on region ${region}")
           ec2.stopInstances(new StopInstancesRequest().withInstanceIds(i.getInstanceId()))
         }
@@ -226,18 +236,34 @@ class EagerRegionDalek(credentials: AWSCredentialsProvider, region: Region) {
       val envName = env.getEnvironmentName()
       println(s"** Exterminating Beanstalk Environment ${envName} [${env.getStatus()} ] ")
       beanstalk.terminateEnvironment(new TerminateEnvironmentRequest()
-      	.withEnvironmentName(envName)
-      	.withTerminateResources(true))
+        .withEnvironmentName(envName)
+        .withTerminateResources(true))
     } catch {
       case e: Exception => println(s"! Failed to exterminate Beanstalk Environment ${env.getEnvironmentName()} [id: ${env.getEnvironmentId} ]: ${e.getMessage()}");
     }
-    
+
   def exterminateApp(app: ApplicationDescription) =
     try {
       println("** Exterminating Beanstalk Application " + app.getApplicationName())
       beanstalk.deleteApplication(new DeleteApplicationRequest().withApplicationName(app.getApplicationName()))
     } catch {
       case e: Exception => println(s"! Failed to exterminate Beanstalk Application ${app.getApplicationName()}: ${e.getMessage()}")
+    }
+
+  def exterminateSG(sg: SecurityGroup) =
+    try {
+      println("** Exterminating Security Group " + sg.getGroupId())
+      ec2.deleteSecurityGroup(new DeleteSecurityGroupRequest().withGroupId(sg.getGroupId()))
+    } catch {
+      case e: Exception => println(s"! Failed to exterminate Security Group ${sg.getGroupId()}: ${e.getMessage()}")
+    }
+
+  def exterminateLB(lb: LoadBalancerDescription) =
+    try {
+      println("** Exterminating Elastic Load Balancer " + lb.getLoadBalancerName())
+      elb.deleteLoadBalancer(new DeleteLoadBalancerRequest().withLoadBalancerName(lb.getLoadBalancerName()))
+    } catch {
+      case e: Exception => println(s"! Failed to exterminate Load Balancer ${lb.getLoadBalancerName()}: ${e.getMessage()}")
     }
 
   def exterminate: Unit = {
@@ -254,6 +280,8 @@ class EagerRegionDalek(credentials: AWSCredentialsProvider, region: Region) {
     buckets foreach exterminate
     tables foreach exterminateTable
     queues foreach exterminateQueue
+    elbs foreach exterminateLB
+    secGroups foreach exterminateSG
   }
 
 }
