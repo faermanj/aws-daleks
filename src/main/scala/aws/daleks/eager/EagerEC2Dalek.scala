@@ -9,6 +9,8 @@ import com.amazonaws.services.ec2.model.TerminateInstancesRequest
 import com.amazonaws.services.ec2.model.Instance
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient
 import com.amazonaws.services.elasticloadbalancing.model.DeleteLoadBalancerRequest
+import com.amazonaws.services.ec2.model.DeleteVolumeRequest
+import com.amazonaws.services.ec2.model.DeleteSecurityGroupRequest
 
 class EagerEC2Dalek(implicit region: Region, credentials: AWSCredentialsProvider) extends Dalek {
   val ec2 = withRegion(new AmazonEC2Client(credentials), region)
@@ -40,9 +42,9 @@ class EagerEC2Dalek(implicit region: Region, credentials: AWSCredentialsProvider
 
     instances foreach TerminateOrStop
 
-    volumes foreach { v =>
-      println("?? Exterminating Volume " + v.getVolumeId())
-      //ec2.deleteVolume(new DeleteVolumeRequest().withVolumeId(v.getVolumeId()));
+    volumes filter {"in-use" != _.getState } foreach { v =>
+      println(s"** Exterminating Volume ${v.getVolumeId}[${v.getState}]")     
+      ec2.deleteVolume(new DeleteVolumeRequest().withVolumeId(v.getVolumeId));
     }
 
     keypairs foreach { k =>
@@ -66,7 +68,7 @@ class EagerEC2Dalek(implicit region: Region, credentials: AWSCredentialsProvider
     secGroups foreach { sg =>
       try {
         println("** Exterminating Security Group " + sg.getGroupId())
-        //ec2.deleteSecurityGroup(new DeleteSecurityGroupRequest().withGroupId(sg.getGroupId()))
+        ec2.deleteSecurityGroup(new DeleteSecurityGroupRequest().withGroupId(sg.getGroupId()))
       } catch {
         case e: Exception => println(s"! Failed to exterminate Security Group ${sg.getGroupId()}: ${e.getMessage()}")
       }
