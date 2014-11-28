@@ -9,7 +9,8 @@ import com.amazonaws.services.s3.model.{ Region => S3Region }
 import com.amazonaws.services.s3.model.S3ObjectSummary
 import com.amazonaws.services.s3.model.Bucket
 
-class EagerS3Dalek(implicit region:Region, credentials: AWSCredentialsProvider) extends Dalek{
+class EagerS3Dalek(implicit region: Region, credentials: AWSCredentialsProvider)
+  extends Dalek {
 
   val s3 = {
     val s3 = new AmazonS3Client(credentials);
@@ -20,7 +21,7 @@ class EagerS3Dalek(implicit region:Region, credentials: AWSCredentialsProvider) 
 
   def buckets = (s3.listBuckets.asScala).filter { bucket =>
     val name = bucket.getName
-    val keep = name.startsWith("logs") || name.startsWith("billing")
+    val keep =  name.startsWith("logs")  || name.startsWith("billing") || name.startsWith("share")
     !keep
   }.filter { bucket =>
     val locStr = s3.getBucketLocation(bucket.getName)

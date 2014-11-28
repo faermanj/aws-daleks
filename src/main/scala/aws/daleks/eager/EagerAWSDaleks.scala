@@ -16,19 +16,20 @@ object EagerAWSDaleks extends App {
 
   val regionals = regions
     .map { Region.getRegion(_) }
-    //.par
+    .par
     .foreach { implicit region =>
+      println("Preparing extermination of region ["+region+"]")
       List(new EagerS3Dalek,
         new EagerBeanstalkDalek,
         new EagerCloudFormationDalek,
-        new EagerDynamoDBDalek,
-        new EagerEC2Dalek,
+        new EagerDynamoDBDalek,        
         new EagerElastiCacheDalek,
         new EagerEMRDalek,
         new EagerRDSDalek,
         new EagerS3Dalek,
         new EagerSNSDalek,
-        new EagerSQSDalek) foreach {_.exterminate}
+        new EagerSQSDalek,
+        new EagerEC2Dalek) foreach {_.exterminate}
     } 
 
   globals foreach { _.exterminate }
