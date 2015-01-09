@@ -4,10 +4,25 @@ import com.amazonaws.regions.Regions
 import com.amazonaws.auth.ClasspathPropertiesFileCredentialsProvider
 import com.amazonaws.regions.Region
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+import com.amazonaws.auth.profile.ProfileCredentialsProvider
 
-object EagerAWSDaleks extends App {
+object EagerAWSDaleks extends App {  
   println("EXTERMINATE!")
-  implicit val credentials = new DefaultAWSCredentialsProviderChain
+  
+  def findArg(arg:String):Option[String] = {
+    val i = args.indexOf(s"-$arg") 
+    if ( i >= 0)
+      Option(args(i+1))
+    else None
+  }
+  
+  val profile = findArg("profile")
+  
+  implicit val credentials = profile match {
+    case Some(prf) => new ProfileCredentialsProvider(prf)
+    case None => new DefaultAWSCredentialsProviderChain
+  }
+  
   val regions = Regions.values filter { !Regions.GovCloud.equals(_) }
 
   val globals = List(
