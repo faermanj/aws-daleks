@@ -1,6 +1,7 @@
 package aws.daleks.eager
 
 import com.amazonaws.regions.Regions
+import com.amazonaws.regions.Regions._
 import com.amazonaws.auth.ClasspathPropertiesFileCredentialsProvider
 import com.amazonaws.regions.Region
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
@@ -23,7 +24,10 @@ object EagerAWSDaleks extends App {
     case None => new DefaultAWSCredentialsProviderChain
   }
   
-  val regions = Regions.values filter { !Regions.GovCloud.equals(_) }
+  val excludedRegions = List(GovCloud,CN_NORTH_1)
+  val regions = Regions.values diff excludedRegions
+  
+  println(s"Exterminating regions [${regions.mkString(",")}]")
 
   val globals = List(
     new EagerRoute53Dalek(),
