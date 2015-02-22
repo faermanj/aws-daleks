@@ -27,5 +27,5 @@ See: http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.ht
 
 and use that profile from the command line
 ```
-sbt "run --profile <profile name>"
+sbt "run -profile <profile name>"
 ```
