@@ -5,6 +5,7 @@ import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.regions.Region
 import scala.collection.JavaConverters._
 import com.amazonaws.services.rds.model.DeleteDBInstanceRequest
+import aws.daleks.util.Humid
 
 class EagerRDSDalek(implicit region: Region, credentials: AWSCredentialsProvider) extends Dalek {
   val rds = withRegion(new AmazonRDSClient(credentials), region)
@@ -17,7 +18,9 @@ class EagerRDSDalek(implicit region: Region, credentials: AWSCredentialsProvider
       val delReq = new DeleteDBInstanceRequest
       delReq.setDBInstanceIdentifier(db.getDBInstanceIdentifier())
       delReq.setSkipFinalSnapshot(true);
-      rds.deleteDBInstance(delReq)
+      Humid {
+        rds.deleteDBInstance(delReq)
+      }
     }
   }
 }

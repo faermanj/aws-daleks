@@ -8,6 +8,7 @@ import scala.collection.JavaConverters._
 import com.amazonaws.services.s3.model.{ Region => S3Region }
 import com.amazonaws.services.s3.model.S3ObjectSummary
 import com.amazonaws.services.s3.model.Bucket
+import aws.daleks.util.Humid
 
 class EagerS3Dalek(implicit region: Region, credentials: AWSCredentialsProvider)
   extends Dalek {
@@ -35,19 +36,23 @@ class EagerS3Dalek(implicit region: Region, credentials: AWSCredentialsProvider)
     val objects = s3.listObjects(bucketName).getObjectSummaries.asScala.par
     objects.foreach { o =>
       println("** Exterminating S3 Object " + bucket.getName + "/" + o.getKey);
-      s3.deleteObject(o.getBucketName, o.getKey)
+      Humid {
+        s3.deleteObject(o.getBucketName, o.getKey)
+      }
     }
     val versions = s3.listVersions(bucketName, "").getVersionSummaries().asScala.par
     versions.foreach { v =>
       println("** Exterminating S3 Version " + bucket.getName + "/" + v.getKey() + " v" + v.getVersionId);
-      s3.deleteVersion(bucketName, v.getKey, v.getVersionId)
+      Humid {
+        s3.deleteVersion(bucketName, v.getKey, v.getVersionId)
+      }
     }
 
     try {
       println("** Exterminating S3 Bucket Policy " + bucket.getName)
-      s3.deleteBucketPolicy(bucket.getName())
+      Humid { s3.deleteBucketPolicy(bucket.getName()) }
       println("** Exterminating S3 Bucket " + bucket.getName)
-      s3.deleteBucket(bucket.getName)
+      Humid { s3.deleteBucket(bucket.getName) }
     } catch {
       case e: Exception => println(s"! Failed to exterminate S3 Bucket ${bucket.getName}: ${e.getMessage()}")
     }

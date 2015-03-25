@@ -24,6 +24,7 @@ import com.amazonaws.services.identitymanagement.model.ListInstanceProfilesForRo
 import com.amazonaws.services.identitymanagement.model.GetRolePolicyRequest
 import com.amazonaws.services.identitymanagement.model.ListRolePoliciesRequest
 import com.amazonaws.services.identitymanagement.model.DeleteRolePolicyRequest
+import aws.daleks.util.Humid
 
 class EagerIAMDalek(implicit credentials: AWSCredentialsProvider) extends Dalek {
   lazy val key = {
@@ -45,7 +46,7 @@ class EagerIAMDalek(implicit credentials: AWSCredentialsProvider) extends Dalek 
 
   def exterminate = {
 
-    println("Exterminating Users")
+    info(this, "Exterminating Users")
     users.foreach { user =>
       try {
 
@@ -61,85 +62,107 @@ class EagerIAMDalek(implicit credentials: AWSCredentialsProvider) extends Dalek 
         userKeys foreach {
           k =>
             {
-              println(s"Exterminating access key [$k.getAccessKeyId()] from user [$username]")
-              iam.deleteAccessKey(new DeleteAccessKeyRequest().withUserName(username).withAccessKeyId(k.getAccessKeyId()))
+              info(this, s"Exterminating access key [$k.getAccessKeyId()] from user [$username]")
+              Humid {
+                iam.deleteAccessKey(new DeleteAccessKeyRequest().withUserName(username).withAccessKeyId(k.getAccessKeyId()))
+              }
             }
         }
 
         val gs = iam.listGroupsForUser(new ListGroupsForUserRequest().withUserName(username)).getGroups().asScala
         gs foreach { g =>
           {
-            println(s"Exterminating membership of user [$username] in group [${g.getGroupName()}]")
-            iam.removeUserFromGroup(new RemoveUserFromGroupRequest().withGroupName(g.getGroupName()).withUserName(username))
+            info(this, s"Exterminating membership of user [$username] in group [${g.getGroupName()}]")
+            Humid {
+              iam.removeUserFromGroup(new RemoveUserFromGroupRequest().withGroupName(g.getGroupName()).withUserName(username))
+            }
           }
         }
 
         val ps = iam.listUserPolicies(new ListUserPoliciesRequest().withUserName(username)).getPolicyNames().asScala
         ps.foreach { p =>
-          println(s"Exterminating policy [$p] of user [$username]")
-          iam.deleteUserPolicy(new DeleteUserPolicyRequest().withUserName(username).withPolicyName(p))
+          info(this, s"Exterminating policy [$p] of user [$username]")
+          Humid {
+            iam.deleteUserPolicy(new DeleteUserPolicyRequest().withUserName(username).withPolicyName(p))
+          }
         }
 
         val olp = Option(iam.getLoginProfile(new GetLoginProfileRequest().withUserName(username)).getLoginProfile())
         olp foreach { lp =>
-          println(s"Exterminating login profile created at [${lp.getCreateDate}] of user [$username]")
-          iam.deleteLoginProfile(new DeleteLoginProfileRequest().withUserName(username))
+          info(this, s"Exterminating login profile created at [${lp.getCreateDate}] of user [$username]")
+          Humid {
+            iam.deleteLoginProfile(new DeleteLoginProfileRequest().withUserName(username))
+          }
         }
 
-        iam.deleteUser(new DeleteUserRequest().withUserName(username))
+        Humid {
+          info(this, s"Deleting user $username")
+          iam.deleteUser(new DeleteUserRequest().withUserName(username))
+        }
       } catch {
-        case e: Exception => println("Failed to exterminate user [" + user.getUserName() + "]: " + e.getMessage())
+        case e: Exception => info(this, "Failed to exterminate user [" + user.getUserName() + "]: " + e.getMessage())
       }
     }
 
-    println("Exterminating Groups")
+    info(this, "Exterminating Groups")
     groups.foreach { group =>
       iam.listGroupPolicies(new ListGroupPoliciesRequest().withGroupName(group.getGroupName())).getPolicyNames().asScala foreach {
         policy =>
           {
-            println(s"Exterminating policy [$policy] in group [${group.getGroupName()}]")
-            iam.deleteGroupPolicy(new DeleteGroupPolicyRequest().withGroupName(group.getGroupName()).withPolicyName(policy))
+            info(this, s"Exterminating policy [$policy] in group [${group.getGroupName()}]")
+            Humid {
+              iam.deleteGroupPolicy(new DeleteGroupPolicyRequest().withGroupName(group.getGroupName()).withPolicyName(policy))
+            }
           }
       }
-      println(s"Exterminating group [${group.getGroupName()}]")
-      iam.deleteGroup(new DeleteGroupRequest().withGroupName(group.getGroupName()))
+      info(this, s"Exterminating group [${group.getGroupName()}]")
+      Humid {
+        iam.deleteGroup(new DeleteGroupRequest().withGroupName(group.getGroupName()))
+      }
     }
 
-    println("Exterminating Roles")
+    info(this, "Exterminating Roles")
     roles.foreach { role =>
       //TODO: Exterminate roles with policies and instances
 
       val roleName = role.getRoleName()
 
-      println(s"Exterminating Instance Profiles for Role [$roleName]")
+      info(this, s"Exterminating Instance Profiles for Role [$roleName]")
       val ipsfr = iam.listInstanceProfilesForRole(
         new ListInstanceProfilesForRoleRequest()
           .withRoleName(roleName))
         .getInstanceProfiles().asScala
       ipsfr foreach { ip =>
-        println(s"Removing instance profile [${ip.getInstanceProfileName()}] from role [$roleName]")
-        iam.removeRoleFromInstanceProfile(
-          new RemoveRoleFromInstanceProfileRequest()
-            .withInstanceProfileName(ip.getInstanceProfileName)
-            .withRoleName(roleName))
+        info(this, s"Removing instance profile [${ip.getInstanceProfileName()}] from role [$roleName]")
+        Humid {
+          iam.removeRoleFromInstanceProfile(
+            new RemoveRoleFromInstanceProfileRequest()
+              .withInstanceProfileName(ip.getInstanceProfileName)
+              .withRoleName(roleName))
+        }
       }
-      
+
       val policies = iam.listRolePolicies(new ListRolePoliciesRequest().withRoleName(roleName)).getPolicyNames().asScala
-      policies foreach {policy =>
-        println(s"Deleting role policy [$policy] from role [$roleName]")
-        iam.deleteRolePolicy(new DeleteRolePolicyRequest().withPolicyName(policy).withRoleName(roleName) ) 
+      policies foreach { policy =>
+        info(this, s"Deleting role policy [$policy] from role [$roleName]")
+        Humid {
+          iam.deleteRolePolicy(new DeleteRolePolicyRequest().withPolicyName(policy).withRoleName(roleName))
+        }
       }
 
-      println(s"Exterminating role [${role.getRoleName()}]")
-      iam.deleteRole(new DeleteRoleRequest().withRoleName(roleName))
-
+      info(this, s"Exterminating role [${role.getRoleName()}]")
+      Humid {
+        iam.deleteRole(new DeleteRoleRequest().withRoleName(roleName))
+      }
     }
 
-    println("Exterminating instance profiles")
+    info(this, "Exterminating instance profiles")
     val ips = iam.listInstanceProfiles().getInstanceProfiles().asScala
     ips foreach { ip =>
-      println(s"Exterminating Instance Profile [${ip.getInstanceProfileName()}]")
-      iam.deleteInstanceProfile(new DeleteInstanceProfileRequest().withInstanceProfileName(ip.getInstanceProfileName()))
+      info(this, s"Exterminating Instance Profile [${ip.getInstanceProfileName()}]")
+      Humid {
+        iam.deleteInstanceProfile(new DeleteInstanceProfileRequest().withInstanceProfileName(ip.getInstanceProfileName()))
+      }
     }
 
   }

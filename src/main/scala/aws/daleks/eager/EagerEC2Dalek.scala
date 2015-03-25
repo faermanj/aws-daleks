@@ -17,19 +17,22 @@ import com.amazonaws.services.ec2.model.DeleteKeyPairRequest
 import com.amazonaws.services.ec2.model.InstanceState
 import com.amazonaws.services.ec2.model.DeregisterImageRequest
 import com.amazonaws.services.ec2.model.DescribeImagesRequest
+import aws.daleks.util.Humid
 
 class EagerEC2Dalek(implicit region: Region, credentials: AWSCredentialsProvider) extends Dalek {
   val ec2 = withRegion(new AmazonEC2Client(credentials), region)
   val elb = withRegion(new AmazonElasticLoadBalancingClient(credentials), region)
 
   def TerminateOrStop(i: Instance) = try {
-    println(s"** Exterminating EC2 Instance ${i.getInstanceId} [${i.getState.getName}] on region ${region}")
-    ec2.terminateInstances(new TerminateInstancesRequest().withInstanceIds(i.getInstanceId))
+    info(this, s"** Exterminating EC2 Instance ${i.getInstanceId} [${i.getState.getName}] on region ${region}")
+    Humid {
+      ec2.terminateInstances(new TerminateInstancesRequest().withInstanceIds(i.getInstanceId))
+    }
   } catch {
     case e: Exception => {
-      println("! Failed to terminate EC2 Instance" + i.getInstanceId())
+      info(this, "! Failed to terminate EC2 Instance" + i.getInstanceId())
       if ("Running".equalsIgnoreCase(i.getState.getName())) {
-        println(s"** Stopping EC2 Instance ${i.getInstanceId} [${i.getState.getName}] on region ${region}")
+        info(this, s"** Stopping EC2 Instance ${i.getInstanceId} [${i.getState.getName}] on region ${region}")
         ec2.stopInstances(new StopInstancesRequest().withInstanceIds(i.getInstanceId()))
       }
     }
@@ -39,10 +42,12 @@ class EagerEC2Dalek(implicit region: Region, credentials: AWSCredentialsProvider
     val keypairs = ec2.describeKeyPairs().getKeyPairs().asScala
     keypairs foreach { k =>
       try {
-        println("** Exterminating KeyPair " + k.getKeyName())
-        ec2.deleteKeyPair(new DeleteKeyPairRequest(k.getKeyName()))
+        info(this, "** Exterminating KeyPair " + k.getKeyName())
+        Humid {
+          ec2.deleteKeyPair(new DeleteKeyPairRequest(k.getKeyName()))
+        }
       } catch {
-        case e: Exception => println(s"! Failed to exterminate KeyPair ${k.getKeyName()}: ${e.getMessage()}")
+        case e: Exception => info(this, s"! Failed to exterminate KeyPair ${k.getKeyName()}: ${e.getMessage()}")
       }
     }
   }
@@ -63,30 +68,34 @@ class EagerEC2Dalek(implicit region: Region, credentials: AWSCredentialsProvider
       try {
 
         val ingress = sg.getIpPermissions
-        println(s"** Revoking [${ingress.size}] ingress rules for [${sg.getGroupId}]")
-        ec2.revokeSecurityGroupIngress(
-          new RevokeSecurityGroupIngressRequest()
-            .withGroupId(sg.getGroupId())
-            .withIpPermissions(ingress))
+        info(this, s"** Revoking [${ingress.size}] ingress rules for [${sg.getGroupId}]")
+        Humid {
+          ec2.revokeSecurityGroupIngress(
+            new RevokeSecurityGroupIngressRequest()
+              .withGroupId(sg.getGroupId())
+              .withIpPermissions(ingress))
+        }
 
         val egress = sg.getIpPermissionsEgress
-        println(s"** Revoking [${egress.size}] egress rules for [${sg.getGroupId}]")
-        ec2.revokeSecurityGroupEgress(
-          new RevokeSecurityGroupEgressRequest()
-            //.withGroupId(sg.getGroupId())
-            .withIpPermissions(egress))
+        info(this, s"** Revoking [${egress.size}] egress rules for [${sg.getGroupId}]")
+        Humid {
+          ec2.revokeSecurityGroupEgress(
+            new RevokeSecurityGroupEgressRequest()
+              //.withGroupId(sg.getGroupId())
+              .withIpPermissions(egress))
+        }
 
       } catch {
-        case e: Exception => println(s"! Failed to clean Security Group ${sg.getGroupId()}: ${e.getMessage()}")
+        case e: Exception => info(this, s"! Failed to clean Security Group ${sg.getGroupId()}: ${e.getMessage()}")
       }
     }
 
     secGroups.foreach { sg =>
       try {
-        println("** Exterminating Security Group " + sg.getGroupId())
-        ec2.deleteSecurityGroup(new DeleteSecurityGroupRequest().withGroupId(sg.getGroupId()))
+        info(this, "** Exterminating Security Group " + sg.getGroupId())
+        Humid { ec2.deleteSecurityGroup(new DeleteSecurityGroupRequest().withGroupId(sg.getGroupId())) }
       } catch {
-        case e: Exception => println(s"! Failed to exterminate Security Group ${sg.getGroupId()}: ${e.getMessage()}")
+        case e: Exception => info(this, s"! Failed to exterminate Security Group ${sg.getGroupId()}: ${e.getMessage()}")
       }
 
     }
@@ -97,8 +106,8 @@ class EagerEC2Dalek(implicit region: Region, credentials: AWSCredentialsProvider
       v => !"in-use".equals(v.getState)
     }
     volumes filter { "in-use" != _.getState } foreach { v =>
-      println(s"** Exterminating Volume ${v.getVolumeId}[${v.getState}]")
-      ec2.deleteVolume(new DeleteVolumeRequest().withVolumeId(v.getVolumeId));
+      info(this, s"** Exterminating Volume ${v.getVolumeId}[${v.getState}]")
+      Humid { ec2.deleteVolume(new DeleteVolumeRequest().withVolumeId(v.getVolumeId)) }
     }
   }
 
@@ -106,24 +115,26 @@ class EagerEC2Dalek(implicit region: Region, credentials: AWSCredentialsProvider
     val elbs = elb.describeLoadBalancers().getLoadBalancerDescriptions().asScala
     elbs foreach { lb =>
       try {
-        println("** Exterminating Elastic Load Balancer " + lb.getLoadBalancerName())
-        elb.deleteLoadBalancer(new DeleteLoadBalancerRequest().withLoadBalancerName(lb.getLoadBalancerName()))
+        info(this, "** Exterminating Elastic Load Balancer " + lb.getLoadBalancerName())
+        Humid { elb.deleteLoadBalancer(new DeleteLoadBalancerRequest().withLoadBalancerName(lb.getLoadBalancerName())) }
       } catch {
-        case e: Exception => println(s"! Failed to exterminate Load Balancer ${lb.getLoadBalancerName()}: ${e.getMessage()}")
+        case e: Exception => info(this, s"! Failed to exterminate Load Balancer ${lb.getLoadBalancerName()}: ${e.getMessage()}")
       }
     }
   }
-  
+
   def exterminateAMIs = {
-    val amis = ec2.describeImages(new DescribeImagesRequest().withOwners("self") ).getImages().asScala
+    val amis = ec2.describeImages(new DescribeImagesRequest().withOwners("self")).getImages().asScala
     amis foreach { ami =>
-      try{
-        println(s"** Exterminating Image [${ami.getImageId}] [${ami.getName}]")
-        ec2.deregisterImage(new DeregisterImageRequest().withImageId(ami.getImageId()))
-      }catch {
-        case e: Exception => println(s"! Failed to exterminate Image [${ami.getImageId()}]: ${e.getMessage()}")
+      try {
+        info(this, s"** Exterminating Image [${ami.getImageId}] [${ami.getName}]")
+        Humid {
+          ec2.deregisterImage(new DeregisterImageRequest().withImageId(ami.getImageId()))
+        }
+      } catch {
+        case e: Exception => info(this, s"! Failed to exterminate Image [${ami.getImageId()}]: ${e.getMessage()}")
       }
-      
+
     }
   }
 

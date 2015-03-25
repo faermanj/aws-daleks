@@ -9,6 +9,7 @@ import com.amazonaws.services.elasticbeanstalk.model.ApplicationDescription
 import com.amazonaws.services.elasticbeanstalk.model.DeleteApplicationRequest
 import com.amazonaws.services.elasticbeanstalk.model.EnvironmentDescription
 import com.amazonaws.services.elasticbeanstalk.model.TerminateEnvironmentRequest
+import aws.daleks.util.Humid
 
 class EagerBeanstalkDalek(implicit region: Region, credentials: AWSCredentialsProvider) extends Dalek {
   val beanstalk = withRegion(new AWSElasticBeanstalkClient(credentials), region)
@@ -37,9 +38,11 @@ class EagerBeanstalkDalek(implicit region: Region, credentials: AWSCredentialsPr
     try {
       val envName = env.getEnvironmentName()
       println(s"** Exterminating Beanstalk Environment ${envName} [${env.getStatus()} ] ")
+      Humid {
       beanstalk.terminateEnvironment(new TerminateEnvironmentRequest()
         .withEnvironmentName(envName)
         .withTerminateResources(true))
+      }
     } catch {
       case e: Exception => println(s"! Failed to exterminate Beanstalk Environment ${env.getEnvironmentName()} [id: ${env.getEnvironmentId} ]: ${e.getMessage()}");
     }
@@ -47,7 +50,9 @@ class EagerBeanstalkDalek(implicit region: Region, credentials: AWSCredentialsPr
   def exterminateApp(app: ApplicationDescription) =
     try {
       println("** Exterminating Beanstalk Application " + app.getApplicationName())
+      Humid {
       beanstalk.deleteApplication(new DeleteApplicationRequest().withApplicationName(app.getApplicationName()))
+      }
     } catch {
       case e: Exception => println(s"! Failed to exterminate Beanstalk Application ${app.getApplicationName()}: ${e.getMessage()}")
     }

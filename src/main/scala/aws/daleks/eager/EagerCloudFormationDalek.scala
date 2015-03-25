@@ -7,6 +7,7 @@ import com.amazonaws.services.sqs.AmazonSQSClient
 import com.amazonaws.services.sqs.model.DeleteQueueRequest
 import com.amazonaws.services.cloudformation.AmazonCloudFormationClient
 import com.amazonaws.services.cloudformation.model.DeleteStackRequest
+import aws.daleks.util.Humid
 
 class EagerCloudFormationDalek(implicit region: Region, credentials: AWSCredentialsProvider) extends Dalek {
   val cloudformation = withRegion(new AmazonCloudFormationClient(credentials), region)
@@ -16,8 +17,10 @@ class EagerCloudFormationDalek(implicit region: Region, credentials: AWSCredenti
 
     stacks foreach { stack => 
       try {
-        println("** Exterminating CloudFormation Stack " + stack.getStackName())
+        info(this,s"** Exterminating CloudFormation Stack " + stack.getStackName())
+        Humid {
         cloudformation.deleteStack(new DeleteStackRequest().withStackName(stack.getStackName()))
+        }
       } catch {
         case e: Exception => println(s"! Failed to exterminate Beanstalk Application ${stack.getStackName}: ${e.getMessage()}")
       }

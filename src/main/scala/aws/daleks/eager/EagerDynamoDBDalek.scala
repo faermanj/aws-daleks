@@ -9,6 +9,7 @@ import com.amazonaws.services.s3.model.{ Region => S3Region }
 import com.amazonaws.services.s3.model.S3ObjectSummary
 import com.amazonaws.services.s3.model.Bucket
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient
+import aws.daleks.util.Humid
 
 class EagerDynamoDBDalek(implicit region: Region, credentials: AWSCredentialsProvider) extends Dalek {
   val dynamo = withRegion(new AmazonDynamoDBClient(credentials), region)
@@ -17,8 +18,8 @@ class EagerDynamoDBDalek(implicit region: Region, credentials: AWSCredentialsPro
     val tables: Seq[String] = dynamo.listTables.getTableNames asScala
 
     tables foreach { t =>
-      println("** Exterminating DyanmoDB Table " + t)
-      dynamo.deleteTable(t)
+      info(this,s"Exterminating DyanmoDB Table ${t}")
+      Humid { dynamo.deleteTable(t) }
     }
 
   }
