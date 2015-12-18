@@ -28,13 +28,3 @@ object Humid {
   def isDry = globalDry.get
   def apply[A](x:A):Humid[A] = if (isDry) Dry else Wet(x)
 }
-
-object HumidTest extends App { 
-  Humid("Uala !!! 1").foreach(println(_));
-  Humid.globalDry.set(false)
-  Humid("Uala !!! 2").foreach(println(_));
-  val t = Humid("Something").map {i => i.toUpperCase() + " uala" }
-  t.foreach(println(_)) 
-  
-  
-}

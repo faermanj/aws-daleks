@@ -1,6 +1,6 @@
-# Exterminate your AWS Account!
+# Iterate through your AWS Account
 
-This will remove (almost) all resources in your AWS Accout.
+This will iterate through all resources in your AWS Account.
 
 1- Install SBT:
 ```
@@ -12,20 +12,18 @@ brew install sbt
   $ export  AWS_ACCESS_KEY_ID=XXX
   $ export  AWS_SECRET_ACCESS_KEY=XXX
 ```  
-see: http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/credentials.html
+For other authentication methods, see: http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/credentials.html
 
-3- Exterminate:
+3- Walk (may take a while)
 ```
 sbt run
 ```
-
-As an alternative, you can setup a profile in
+# Exterminate:
 ```
-~/.aws/config
+sbt run
 ```
-See: http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-multiple-profiles
-
-and use that profile from the command line
-```
-sbt "run -profile <profile name>"
-```
+This exterminates almost all resources in your AWS account.
+By default, these resources are spared:
+- IAM Roles named DO-NOT-DELETE
+- Main VPC
+- Termination protected instances
