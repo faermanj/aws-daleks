@@ -2,8 +2,9 @@ package aws.daleks.eager
 
 import com.amazonaws.regions.Regions
 import com.amazonaws.regions.Regions._
-import com.amazonaws.auth.ClasspathPropertiesFileCredentialsProvider
 import com.amazonaws.regions.Region
+import com.amazonaws.auth.ClasspathPropertiesFileCredentialsProvider
+
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import com.amazonaws.auth.profile.ProfileCredentialsProvider
 

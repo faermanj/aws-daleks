@@ -1,13 +1,13 @@
 package aws.daleks.eager
 
+import scala.collection.JavaConverters.asScalaBufferConverter
+
 import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.regions.Region
-import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.regions.ServiceAbbreviations
-import scala.collection.JavaConverters._
+import com.amazonaws.services.s3.AmazonS3Client
 import com.amazonaws.services.s3.model.{ Region => S3Region }
-import com.amazonaws.services.s3.model.S3ObjectSummary
-import com.amazonaws.services.s3.model.Bucket
+
 import aws.daleks.util.Humid
 
 class EagerS3Dalek(implicit region: Region, credentials: AWSCredentialsProvider)
