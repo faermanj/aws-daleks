@@ -1,29 +1,25 @@
-# Iterate through your AWS Account
+# Iterate and exterminate your AWS Account
 
-This will iterate through all resources in your AWS Account.
+This will iterate through all resources in your AWS Account and exterminate them
 
 1- Install SBT:
 ```
 brew install sbt
 ```
 
-2- Set your credentials:
+2- Just fly, don't exterminate (a.k.a dry run): 
 ```
-  $ export  AWS_ACCESS_KEY_ID=XXX
-  $ export  AWS_SECRET_ACCESS_KEY=XXX
-```  
-For other authentication methods, see: http://docs.aws.amazon.com/AWSSdkDocsJava/latest/DeveloperGuide/credentials.html
+  AWS_ACCESS_KEY_ID='[YOUR_KEY]' \
+  AWS_SECRET_ACCESS_KEY='[YOUR_SECRET]' \ 
+  sbt run
+```
+3- EXTERMINATE!
+```
+  AWS_ACCESS_KEY_ID='[YOUR_KEY]' \
+  AWS_SECRET_ACCESS_KEY='[YOUR_SECRET]' \ 
+  sbt "run exterminate"
+```
 
-3- Walk (may take a while)
-```
-sbt run
-```
-# Exterminate:
-```
-sbt run
-```
-This exterminates almost all resources in your AWS account.
-By default, these resources are spared:
-- IAM Roles named DO-NOT-DELETE
-- Main VPC
-- Termination protected instances
+Currently exterminating:
+- S3
+

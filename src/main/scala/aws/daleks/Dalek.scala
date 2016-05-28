@@ -4,10 +4,18 @@ import com.amazonaws.AmazonWebServiceClient
 import com.amazonaws.regions.Region
 
 trait Dalek {
-  def withRegion[T <: AmazonWebServiceClient](client: T, region: Region): T = {
+
+  def withRegion[T <: AmazonWebServiceClient](client: T)(implicit region: Region): T = {
     client.setRegion(region)
     client
   }
-  
-  def exterminate
+
+  def fly
+
+  def exterminate(f: () => _): Unit =
+    if (!Dalek.good) f()
+}
+
+object Dalek {
+  var good = true
 }
