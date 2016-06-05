@@ -6,8 +6,9 @@ import com.amazonaws.services.cloudformation.AmazonCloudFormationClient
 import com.amazonaws.services.cloudformation.model.Stack
 import com.amazonaws.services.cloudformation.model.DeleteStackRequest
 
+//TODO: Consider pagination
 case class CloudFormationDalek(implicit region: Region) extends Dalek {
-  def cfn = new AmazonCloudFormationClient
+  def cfn = withRegion(new AmazonCloudFormationClient)
 
   def fly = cfn.describeStacks.getStacks.asScala
     .foreach { exterminate(_) }

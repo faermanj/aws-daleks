@@ -9,11 +9,15 @@ case class RegionDalek(implicit val  region: Region) {
     S3Dalek(),
     
     CloudFormationDalek(),
-    ElasticBeanstalkDalek(),
+    ElasticBeanstalkDalek(),   
     
     AutoScalingDalek(),
     
     RDSDalek(),
+    DynamoDBDalek(),
+    ElastiCacheDalek(),
+    
+    EMRDalek(),
     
     EC2Dalek()
   ).foreach(_.fly)
