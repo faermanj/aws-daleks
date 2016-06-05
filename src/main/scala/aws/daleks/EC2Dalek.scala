@@ -9,9 +9,12 @@ import com.amazonaws.services.ec2.model.TerminateInstancesRequest
 import scala.util.Try
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.services.ec2.model.StopInstancesRequest
+import com.amazonaws.services.ec2.model.DescribeInstanceAttributeRequest
+import com.amazonaws.services.ec2.model.InstanceAttributeName
+import com.amazonaws.services.ec2.model.InstanceState
 
 case class EC2Dalek(implicit region: Region) extends Dalek {
-  val TERMINATED = 48
+  val RUNNING = 16
   val ec2 = withRegion(new AmazonEC2Client())
   def fly = {
     flyInstances
@@ -24,22 +27,24 @@ case class EC2Dalek(implicit region: Region) extends Dalek {
     .foreach { exterminate(_) }
 
   def exterminate(instance: Instance): Unit = {
-    val state = instance.getState.getCode
     val instanceId = instance.getInstanceId
-    println(s"${region} | ${instanceId}")
-    if (state != TERMINATED) exterminate { () =>
-      Try {
+    val state = instance.getState
+    val isRunning = instance.getState == RUNNING
+    val isDisableApiTermination = ec2.describeInstanceAttribute(
+      new DescribeInstanceAttributeRequest()
+        .withInstanceId(instanceId)
+        .withAttribute(InstanceAttributeName.DisableApiTermination)).getInstanceAttribute
+      .isDisableApiTermination
+    println(s"${region} | ${instanceId}[${state.getName}]")
+    if (isRunning) exterminate { () =>
+      if (isDisableApiTermination)
+        ec2.stopInstances(
+          new StopInstancesRequest()
+            .withInstanceIds(instanceId))
+      else
         ec2.terminateInstances(
           new TerminateInstancesRequest()
             .withInstanceIds(instanceId))
-      }.recover {
-        //TODO: Proper termination protection detection
-        case e: AmazonServiceException => ec2.stopInstances(
-          new StopInstancesRequest()
-            .withInstanceIds(instanceId))
-      }
-
     }
   }
-
 }

@@ -7,6 +7,8 @@ import com.amazonaws.services.autoscaling.model.AutoScalingGroup
 import com.amazonaws.services.autoscaling.model.DeleteAutoScalingGroupRequest
 import com.amazonaws.services.autoscaling.model.DeleteLaunchConfigurationRequest
 import com.amazonaws.services.autoscaling.model.LaunchConfiguration
+import com.amazonaws.services.autoscaling.model.SetDesiredCapacityRequest
+import com.amazonaws.services.autoscaling.model.UpdateAutoScalingGroupRequest
 
 case class AutoScalingDalek(implicit region: Region) extends Dalek {
   def as = withRegion(new AmazonAutoScalingClient())
@@ -29,6 +31,10 @@ case class AutoScalingDalek(implicit region: Region) extends Dalek {
     val asgName = asg.getAutoScalingGroupName
     println(s"${region} | ${asgName}")
     exterminate { () =>
+      as.updateAutoScalingGroup(new UpdateAutoScalingGroupRequest()
+      .withAutoScalingGroupName(asgName)
+      .withMinSize(0)
+      .withDesiredCapacity(0))
       as.deleteAutoScalingGroup(
         new DeleteAutoScalingGroupRequest()
           .withAutoScalingGroupName(asgName))

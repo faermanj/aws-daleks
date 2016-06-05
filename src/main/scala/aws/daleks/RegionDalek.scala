@@ -7,9 +7,14 @@ import com.amazonaws.auth.AWSCredentialsProvider
 case class RegionDalek(implicit val  region: Region) {
   def fly = List(
     S3Dalek(),
+    
+    CloudFormationDalek(),
     ElasticBeanstalkDalek(),
+    
+    AutoScalingDalek(),
+    
     RDSDalek(),
-    //TODO: AutoScalingDalek(),
+    
     EC2Dalek()
   ).foreach(_.fly)
 
