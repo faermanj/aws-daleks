@@ -12,6 +12,7 @@ case class RegionDalek(implicit val  region: Region) {
     ElasticBeanstalkDalek(),   
     
     AutoScalingDalek(),
+    ELBDalek(),
     
     RDSDalek(),
     DynamoDBDalek(),

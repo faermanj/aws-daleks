@@ -12,19 +12,202 @@ import com.amazonaws.services.ec2.model.StopInstancesRequest
 import com.amazonaws.services.ec2.model.DescribeInstanceAttributeRequest
 import com.amazonaws.services.ec2.model.InstanceAttributeName
 import com.amazonaws.services.ec2.model.InstanceState
+import com.amazonaws.services.ec2.model.Volume
+import com.amazonaws.services.ec2.model.DeleteVolumeRequest
+import com.amazonaws.services.ec2.model.KeyPair
+import com.amazonaws.services.ec2.model.DeleteKeyPairRequest
+import com.amazonaws.services.ec2.model.KeyPairInfo
+import com.amazonaws.services.ec2.model.Image
+import com.amazonaws.services.ec2.model.DeregisterImageRequest
+import com.amazonaws.services.ec2.model.Snapshot
+import com.amazonaws.services.ec2.model.DeleteSnapshotRequest
+import com.amazonaws.services.ec2.model.VolumeState
+import com.amazonaws.services.ec2.model.DescribeImagesRequest
+import com.amazonaws.services.ec2.model.NetworkInterface
+import com.amazonaws.services.ec2.model.DeleteNetworkInterfaceRequest
+import com.amazonaws.services.ec2.model.NetworkInterfaceStatus
+import com.amazonaws.services.ec2.model.SnapshotState
+import com.amazonaws.services.ec2.model.DescribeSnapshotsRequest
+import com.amazonaws.services.ec2.model.ImageState
+import scala.collection.mutable.ListBuffer
+import com.amazonaws.services.ec2.model.Address
+import com.amazonaws.services.ec2.model.ReleaseAddressRequest
+import com.amazonaws.services.ec2.model.SecurityGroup
+import com.amazonaws.services.ec2.model.IpPermission
+import com.amazonaws.services.ec2.model.RevokeSecurityGroupIngressRequest
+import com.amazonaws.services.ec2.model.DeleteSecurityGroupRequest
+import com.amazonaws.services.ec2.model.RevokeSecurityGroupEgressRequest
 
 case class EC2Dalek(implicit region: Region) extends Dalek {
   val RUNNING = 16
   val ec2 = withRegion(new AmazonEC2Client())
+  val spared = new ListBuffer[Instance]()
+
   def fly = {
     flyInstances
+    flyImages
+    flyVolumes
+    flySnapshots
+    flyKeys
+    flyENIs
+    flyEIPs
+    flySGs
   }
+
+  def flySGs = {
+    val sgs = ec2.describeSecurityGroups
+      .getSecurityGroups
+      .asScala
+    sgs.foreach { flyRules }
+    val sparedSGs = spared
+      .flatMap { _.getSecurityGroups.asScala }
+      .map { _.getGroupId }
+      .toSet
+    sgs.foreach { exterminate(_, sparedSGs) }
+  }
+
+  def exterminate(sg: SecurityGroup, sparedSGs: Set[String]): Unit = {
+    val sgId = sg.getGroupId
+    val sgName = sg.getGroupName
+    val spared = sgName == "default" || sparedSGs.contains(sgId)
+    println(s"${region} | ${sgId}")
+    exterminate { () =>
+      if (!spared)
+        ec2.deleteSecurityGroup(
+          new DeleteSecurityGroupRequest()
+            .withGroupId(sgId))
+    }
+  }
+
+  def flyRules(sg: SecurityGroup) = {
+    sg.getIpPermissions.asScala.foreach { exterminateIngress(sg, _) }
+    sg.getIpPermissions.asScala.foreach { exterminateEgress(sg, _) }
+  }
+
+  def exterminateEgress(sg: SecurityGroup, perm: IpPermission): Unit = {
+    val sgId = sg.getGroupId
+    val proto = perm.getIpProtocol
+    val from = Option(perm.getFromPort).getOrElse("Any")
+    val to = Option(perm.getToPort).getOrElse("Any")
+    val src = perm.getIpRanges.asScala.mkString
+    println(s"${region} | ${sgId} | ${proto},${from}-${to},${src}")
+    exterminate { () =>
+      ec2.revokeSecurityGroupEgress(
+        new RevokeSecurityGroupEgressRequest()
+          .withGroupId(sgId)
+          .withIpPermissions(perm))
+    }
+  }
+
+  def exterminateIngress(sg: SecurityGroup, perm: IpPermission): Unit = {
+    val sgId = sg.getGroupId
+    val proto = perm.getIpProtocol
+    val from = Option(perm.getFromPort).getOrElse("Any")
+    val to = Option(perm.getToPort).getOrElse("Any")
+    val src = perm.getIpRanges.asScala.mkString
+    println(s"${region} | ${sgId} | ${proto},${from}-${to},${src}")
+    exterminate { () =>
+      ec2.revokeSecurityGroupIngress(
+        new RevokeSecurityGroupIngressRequest()
+          .withGroupId(sgId)
+          .withIpPermissions(perm))
+    }
+  }
+
+  def flyEIPs = ec2.describeAddresses
+    .getAddresses
+    .asScala
+    .foreach { exterminate }
+
+  def flyENIs = ec2.describeNetworkInterfaces
+    .getNetworkInterfaces
+    .asScala
+    .foreach { exterminate }
+
+  def flySnapshots = ec2.describeSnapshots(new DescribeSnapshotsRequest().withOwnerIds("self"))
+    .getSnapshots
+    .asScala
+    .foreach { exterminate }
+
+  def flyImages = ec2
+    .describeImages(new DescribeImagesRequest().withOwners("self"))
+    .getImages
+    .asScala
+    .foreach { exterminate }
+
+  def flyKeys = ec2.describeKeyPairs
+    .getKeyPairs
+    .asScala
+    .foreach { exterminate }
+
+  //TODO: Paginate
+  def flyVolumes = ec2.describeVolumes
+    .getVolumes
+    .asScala
+    .foreach { exterminate }
 
   def flyInstances = ec2.describeInstances
     .getReservations
     .asScala
     .flatMap { r => r.getInstances.asScala }
-    .foreach { exterminate(_) }
+    .foreach { exterminate }
+
+  def exterminate(eip: Address): Unit = {
+    val allocId = eip.getAllocationId
+    println(s"${region} | ${allocId}")
+    exterminate { () =>
+      ec2.releaseAddress(new ReleaseAddressRequest()
+        .withAllocationId(allocId))
+    }
+  }
+
+  def exterminate(eni: NetworkInterface): Unit = {
+    val eniId = eni.getNetworkInterfaceId
+    val eniStatus = NetworkInterfaceStatus.fromValue(eni.getStatus)
+    println(s"${region} | ${eniId}[${eniStatus}]")
+    exterminate { () =>
+      if (eniStatus != NetworkInterfaceStatus.InUse)
+        ec2.deleteNetworkInterface(new DeleteNetworkInterfaceRequest()
+          .withNetworkInterfaceId(eniId))
+    }
+  }
+
+  def exterminate(snap: Snapshot): Unit = {
+    val snapId = snap.getSnapshotId
+    val snapState = SnapshotState.fromValue(snap.getState)
+    println(s"${region} | ${snapId}[${snapState}]")
+    exterminate { () =>
+      ec2.deleteSnapshot(new DeleteSnapshotRequest().withSnapshotId(snapId))
+    }
+  }
+
+  def exterminate(image: Image): Unit = {
+    val imageId = image.getImageId
+    val imageState = ImageState.fromValue(image.getState)
+    println(s"${region} | ${imageId}[${imageState}]")
+    exterminate { () =>
+      ec2.deregisterImage(new DeregisterImageRequest().withImageId(imageId))
+    }
+  }
+
+  def exterminate(kp: KeyPairInfo): Unit = {
+    val keyname = kp.getKeyName
+    println(s"${region} | ${keyname}")
+    exterminate { () =>
+      ec2.deleteKeyPair(new DeleteKeyPairRequest().withKeyName(keyname))
+    }
+  }
+
+  def exterminate(volume: Volume): Unit = {
+    val volumeId = volume.getVolumeId
+    val volumeState = VolumeState.fromValue(volume.getState)
+    println(s"${region} | ${volumeId}[${volumeState}]")
+    exterminate { () =>
+      if (VolumeState.InUse != volumeState)
+        ec2.deleteVolume(
+          new DeleteVolumeRequest().withVolumeId(volumeId))
+    }
+  }
 
   def exterminate(instance: Instance): Unit = {
     val instanceId = instance.getInstanceId
@@ -37,11 +220,12 @@ case class EC2Dalek(implicit region: Region) extends Dalek {
       .isDisableApiTermination
     println(s"${region} | ${instanceId}[${state.getName}]")
     if (isRunning) exterminate { () =>
-      if (isDisableApiTermination)
+      if (isDisableApiTermination) {
         ec2.stopInstances(
           new StopInstancesRequest()
             .withInstanceIds(instanceId))
-      else
+        spared += instance
+      } else
         ec2.terminateInstances(
           new TerminateInstancesRequest()
             .withInstanceIds(instanceId))

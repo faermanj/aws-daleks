@@ -9,7 +9,7 @@ import com.amazonaws.services.dynamodbv2.model.DeleteTableRequest
 case class DynamoDBDalek (implicit region: Region) extends Dalek {
   val ddb = withRegion(new AmazonDynamoDBClient)
   
-  val fly = ddb.listTables.getTableNames.asScala
+  def fly = ddb.listTables.getTableNames.asScala
                .foreach{exterminate(_)}
   
   def exterminate(tblName:String):Unit = {

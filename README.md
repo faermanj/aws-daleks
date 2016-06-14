@@ -13,6 +13,7 @@ brew install sbt
   AWS_SECRET_ACCESS_KEY='[YOUR_SECRET]' \ 
   sbt run
 ```
+
 3- EXTERMINATE!
 ```
   AWS_ACCESS_KEY_ID='[YOUR_KEY]' \
@@ -20,6 +21,5 @@ brew install sbt
   sbt "run exterminate"
 ```
 
-Currently exterminating:
-- S3
-
+Spared by default:
+- IAM user named *dalek* 
