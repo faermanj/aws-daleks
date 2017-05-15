@@ -19,6 +19,7 @@ case class RegionDalek(implicit val  region: Region) {
     ElastiCacheDalek(),
     
     EMRDalek(),
+    RedshiftDalek(),
     
     EC2Dalek()
   ).foreach(_.fly)

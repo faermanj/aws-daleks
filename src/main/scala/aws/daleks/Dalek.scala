@@ -6,7 +6,6 @@ import com.amazonaws.AmazonServiceException
 import scala.util.Try
 
 trait Dalek {
-  
 
   def withRegion[T <: AmazonWebServiceClient](client: T)(implicit region: Region): T = {
     client.setRegion(region)
