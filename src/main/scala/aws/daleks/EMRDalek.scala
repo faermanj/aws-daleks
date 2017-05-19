@@ -10,16 +10,19 @@ import com.amazonaws.services.elasticache.model.DeleteCacheClusterRequest
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClient
 import com.amazonaws.services.elasticmapreduce.model.ClusterSummary
 import com.amazonaws.services.elasticmapreduce.model.TerminateJobFlowsRequest
+import com.amazonaws.services.elasticmapreduce.model.DescribeClusterRequest
 
 case class EMRDalek(implicit region: Region) extends Dalek {
   val emr = withRegion(new AmazonElasticMapReduceClient())
 
   val fly = emr.listClusters().getClusters.asScala.foreach { exterminate }
 
-  def exterminate(cluster: ClusterSummary): Unit = {
-    val clusterId = cluster.getId
-    println(s"${region} | ${clusterId}")
-    exterminate { () =>
+  def exterminate(clusterSum: ClusterSummary): Unit = {
+    val clusterId = clusterSum.getId
+    val cluster = emr.describeCluster(new DescribeClusterRequest().withClusterId(clusterId)).getCluster
+    val termProtected = cluster.getTerminationProtected 
+    println(s"${region} | ${clusterId} ! ${termProtected}")
+    if (!termProtected) exterminate { () =>
       emr.terminateJobFlows(new TerminateJobFlowsRequest()
         .withJobFlowIds(List(clusterId).asJava))
     }

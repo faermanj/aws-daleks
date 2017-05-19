@@ -21,7 +21,9 @@ case class RegionDalek(implicit val  region: Region) {
     EMRDalek(),
     RedshiftDalek(),
     
-    EC2Dalek()
+    EC2Dalek(),
+    VPCDalek(),
+    SGDalek()
   ).foreach(_.fly)
 
   override def toString = region.toString
