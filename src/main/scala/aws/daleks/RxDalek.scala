@@ -5,14 +5,16 @@ import com.amazonaws.AmazonWebServiceClient
 import rx.lang.scala._
 
 abstract class RxDalek[T](implicit region: Region) extends Dalek{
-  def toLanding(t:Tuple2[String,String]*):Landing = Map("region" -> region.toString()) ++ Map(t:_*)
   
-  def observe:Observable[T]
-  def exterminate(t:T):Unit
-  def describe(t:T):Map[String,String]
+  def observe:Observable[T] = Observable.empty
+  def exterminate(t:T):Unit = {}
+  def describe(t:T):Map[String,String] = Map()
   
+  def flyDependencies(t:T) = {}
+    
   def fly = for (target <- observe ){
-        speak(describe(target))
+        flyDependencies(target)
+        speak(describe(target)+("region" -> region.toString()))
         if (! Dalek.good) exterminate(target)    
   }
     
