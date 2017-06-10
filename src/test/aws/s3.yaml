@@ -1,0 +1,3 @@
+Resources:
+  emptybucket:
+    Type: AWS::S3::Bucket

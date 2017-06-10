@@ -16,6 +16,8 @@ import com.amazonaws.services.s3.model.S3VersionSummary
 import com.amazonaws.services.s3.AmazonS3ClientBuilder
 import rx.lang.scala._
 import com.amazonaws.services.s3.model.DeleteBucketRequest
+import com.amazonaws.services.s3.model.SetBucketVersioningConfigurationRequest
+import com.amazonaws.services.s3.model.BucketVersioningConfiguration
 
 case class S3BucketDalek(implicit region: Region) extends RxDalek[Bucket] {
   val s3 = new AmazonS3Client
@@ -33,6 +35,9 @@ case class S3BucketDalek(implicit region: Region) extends RxDalek[Bucket] {
   
   override def exterminate(bucket: Bucket) = {
     val bucketName = bucket.getName
+    s3.setBucketVersioningConfiguration(
+          new SetBucketVersioningConfigurationRequest(bucket.getName,
+              new BucketVersioningConfiguration(BucketVersioningConfiguration.SUSPENDED)))
     s3.deleteBucketPolicy(bucketName)
     s3.deleteBucket(bucketName)
   }
