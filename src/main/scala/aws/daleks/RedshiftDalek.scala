@@ -21,7 +21,9 @@ case class RedshiftDalek (implicit region: Region) extends Dalek {
      val clusterId = cluster.getClusterIdentifier
      println(s"${region} | ${clusterId}")
      exterminate { () =>
-       redshift.deleteCluster(new DeleteClusterRequest().withClusterIdentifier(clusterId))
+       redshift.deleteCluster(new DeleteClusterRequest()
+       .withSkipFinalClusterSnapshot(true)
+       .withClusterIdentifier(clusterId))
     }  
  }
   

@@ -8,7 +8,6 @@ import scala.collection.JavaConverters._
 import com.amazonaws.services.s3.model.S3ObjectSummary
 import com.amazonaws.regions.Region
 import com.amazonaws.regions.ServiceAbbreviations
-import com.amazonaws.auth.AWSCredentialsProvider
 import com.amazonaws.services.s3.model.{ Region => S3Region }
 import com.amazonaws.services.s3.model.ListBucketsRequest
 import com.amazonaws.services.s3.model.VersionListing

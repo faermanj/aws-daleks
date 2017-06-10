@@ -9,48 +9,26 @@ import com.amazonaws.services.autoscaling.model.DeleteLaunchConfigurationRequest
 import com.amazonaws.services.autoscaling.model.LaunchConfiguration
 import com.amazonaws.services.autoscaling.model.SetDesiredCapacityRequest
 import com.amazonaws.services.autoscaling.model.UpdateAutoScalingGroupRequest
+import rx.lang.scala._
 
-case class AutoScalingDalek(implicit region: Region) extends Dalek {
+case class AutoScalingDalek(implicit region: Region) extends RxDalek[AutoScalingGroup] {
   def as = withRegion(new AmazonAutoScalingClient())
-  override def fly = {
-    flyASGs
-    flyLCs
-  }
 
-  def flyASGs = as.describeAutoScalingGroups()
+  override def observe: Observable[AutoScalingGroup] = as.describeAutoScalingGroups()
     .getAutoScalingGroups
     .asScala
-    .foreach { exterminate(_) }
+    .toObservable
 
-  def flyLCs = as.describeLaunchConfigurations()
-    .getLaunchConfigurations
-    .asScala
-    .foreach { exterminate(_) }
-
-  def exterminate(asg: AutoScalingGroup): Unit = {
-    val asgName = asg.getAutoScalingGroupName
-    println(s"${region} | ${asgName}")
-    exterminate { () =>
-      as.updateAutoScalingGroup(new UpdateAutoScalingGroupRequest()
-      .withAutoScalingGroupName(asgName)
+  override def exterminate(asg: AutoScalingGroup): Unit = {
+    as.updateAutoScalingGroup(new UpdateAutoScalingGroupRequest()
+      .withAutoScalingGroupName(asg.getAutoScalingGroupName)
       .withMinSize(0)
       .withDesiredCapacity(0))
-      as.deleteAutoScalingGroup(
-        new DeleteAutoScalingGroupRequest()
-          .withAutoScalingGroupName(asgName))
-    }
-
+    as.deleteAutoScalingGroup(
+      new DeleteAutoScalingGroupRequest()
+        .withAutoScalingGroupName(asg.getAutoScalingGroupName))
   }
 
-  def exterminate(lc: LaunchConfiguration): Unit = {
-    val lcName = lc.getLaunchConfigurationName
-    println(s"${region} | ${lcName}")
-    exterminate { () =>
-      as.deleteLaunchConfiguration(
-        new DeleteLaunchConfigurationRequest()
-          .withLaunchConfigurationName(lcName))
-    }
-
-  }
+  override def describe(asg: AutoScalingGroup): Map[String, String] = Map(("autoScalingGroupName" -> asg.getAutoScalingGroupName))
 
 }

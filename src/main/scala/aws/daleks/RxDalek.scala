@@ -19,6 +19,6 @@ abstract class RxDalek[T](implicit region: Region) extends Dalek{
   }
     
   def speak(landing:Map[String,String]):Unit = {
-    println(landing.map{ case (key, value) => s"${key}=${value}" }.mkString(" | "))
+    println(landing.map{ case (key, value) => s"${key}=${value}" }.mkString(", "))
   }
 }

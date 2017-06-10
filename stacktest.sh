@@ -1,7 +1,8 @@
 #!/bin/sh
+T="ec2"
 S="dalektest123$RANDOM"
 echo $S
-SID=$(aws cloudformation create-stack --stack-name $S --template-body file://./src/test/aws/s3.yaml --output=text)
+SID=$(aws cloudformation create-stack --stack-name $S --template-body "file://./src/test/aws/${T}.yaml" --output=text)
 aws cloudformation wait stack-create-complete --stack-name $S
 #Expect a lot of resources
 sbt run
