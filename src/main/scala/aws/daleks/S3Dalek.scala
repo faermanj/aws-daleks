@@ -17,7 +17,7 @@ import com.amazonaws.services.s3.model.S3VersionSummary
 case class S3Dalek(implicit region: Region) extends Dalek {
   val s3 = new AmazonS3Client
 
-  def fly = {
+  override def fly = {
     val buckets = s3.listBuckets
     val regionBuckets = buckets.asScala.filter { bucket =>
       val locStr = s3.getBucketLocation(bucket.getName)
@@ -54,9 +54,12 @@ case class S3Dalek(implicit region: Region) extends Dalek {
     }
   }
 
+  def appear(region:String,bucketName:String) = 
+    println(s"${region} | ${bucketName}")
+    
   def exterminate(bucket: Bucket): Unit = {
     val bucketName = bucket.getName
-    println(s"${region} | ${bucketName}")
+    appear(region.toString(),bucketName)
     exterminate { ()=> s3.deleteBucketPolicy(bucketName) }
     exterminate { ()=> s3.deleteBucket(bucketName) } 
   }

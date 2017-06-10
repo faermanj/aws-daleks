@@ -43,7 +43,7 @@ case class EC2Dalek(implicit region: Region) extends Dalek {
   val ec2 = withRegion(new AmazonEC2Client())
   val spared = new ListBuffer[Instance]()
 
-  def fly = {
+  override def fly = {
     flyInstances
     flyImages
     flyVolumes

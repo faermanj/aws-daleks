@@ -8,7 +8,7 @@ import com.amazonaws.services.ec2._
 case class VPCDalek(implicit region: Region) extends Dalek {
   val ec2 = withRegion(new AmazonEC2Client())
 
-  def fly = flyVPCs
+  override def fly = flyVPCs
 
   def flyVPCs = {
     val vpcs = ec2.describeVpcs().getVpcs.asScala

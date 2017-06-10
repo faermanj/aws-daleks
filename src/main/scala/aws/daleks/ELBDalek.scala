@@ -10,7 +10,7 @@ case class ELBDalek(implicit region: Region) extends Dalek {
   val elb = withRegion(new AmazonElasticLoadBalancingClient)
 
   //TODO:Paginate
-  def fly = elb.describeLoadBalancers
+  override def fly = elb.describeLoadBalancers
     .getLoadBalancerDescriptions
     .asScala
     .foreach { exterminate }

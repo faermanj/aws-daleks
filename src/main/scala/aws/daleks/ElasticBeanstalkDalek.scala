@@ -13,7 +13,7 @@ import com.amazonaws.services.elasticbeanstalk.model.DeleteApplicationVersionReq
 case class ElasticBeanstalkDalek(implicit region: Region) extends Dalek {
   val eb = withRegion(new AWSElasticBeanstalkClient)
 
-  def fly = {
+  override def fly = {
     flyEnvs
     flyApps
   }

@@ -12,7 +12,7 @@ import com.amazonaws.services.sns.model.Topic
 case class SNSDalek (implicit region: Region) extends Dalek {
   val sns = withRegion(new AmazonSNSClient)
   
-  def fly = fly(sns.listTopics)
+  override def fly = fly(sns.listTopics)
   
   def fly(trs:ListTopicsResult) =  {
     //TODO:Paginate

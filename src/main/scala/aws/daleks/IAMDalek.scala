@@ -12,7 +12,7 @@ import com.amazonaws.services.identitymanagement.model.AccessKeyMetadata
 case class IAMDalek() extends Dalek {
   val iam = new AmazonIdentityManagementClient()
 
-  def fly = {
+ override  def fly = {
     flyUsers
   }
 

@@ -8,17 +8,18 @@ import com.amazonaws.services.rds.model.DeleteDBInstanceRequest
 
 case class RDSDalek(implicit region: Region) extends Dalek {
   val rds = withRegion(new AmazonRDSClient)
-  def fly = rds.describeDBInstances
+  override def fly = rds.describeDBInstances
     .getDBInstances
     .asScala
     .foreach { exterminate(_) }
 
-  def exterminate(dbi:DBInstance):Unit = {
+  def exterminate(dbi: DBInstance): Unit = {
     val dbId = dbi.getDBInstanceIdentifier
     println(s"${region} | ${dbId}")
-    exterminate { () => rds.deleteDBInstance(new DeleteDBInstanceRequest()
-       .withDBInstanceIdentifier(dbId)
-       .withSkipFinalSnapshot(true))
+    exterminate { () =>
+      rds.deleteDBInstance(new DeleteDBInstanceRequest()
+        .withDBInstanceIdentifier(dbId)
+        .withSkipFinalSnapshot(true))
     }
   }
 }

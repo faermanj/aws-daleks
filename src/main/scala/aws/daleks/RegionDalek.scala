@@ -6,24 +6,24 @@ import com.amazonaws.auth.AWSCredentialsProvider
 
 case class RegionDalek(implicit val  region: Region) {
   def fly = List(
-    S3Dalek(),
-    
-    CloudFormationDalek(),
-    ElasticBeanstalkDalek(),   
-    
-    AutoScalingDalek(),
-    ELBDalek(),
-    
-    RDSDalek(),
-    DynamoDBDalek(),
-    ElastiCacheDalek(),
-    
-    EMRDalek(),
-    RedshiftDalek(),
-    
-    EC2Dalek(),
-    VPCDalek(),
-    SGDalek()
+//    S3Dalek(),
+//    
+//    CloudFormationDalek(),
+//    ElasticBeanstalkDalek(),   
+//    
+//    AutoScalingDalek(),
+//    ELBDalek(),
+//    
+//    RDSDalek(),
+//    DynamoDBDalek(),
+//    ElastiCacheDalek(),
+//    
+      EMRDalek()
+//    RedshiftDalek(),
+//    
+//    EC2Dalek(),
+//    VPCDalek(),
+//    SGDalek()
   ).foreach(_.fly)
 
   override def toString = region.toString

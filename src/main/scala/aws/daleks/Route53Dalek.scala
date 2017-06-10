@@ -16,7 +16,7 @@ import com.amazonaws.services.route53.model.DeleteHostedZoneRequest
 case class Route53Dalek() extends Dalek {
   val r53 = new AmazonRoute53Client()
 
-  def fly = flyZones
+  override def fly = flyZones
   
 
   def flyZones = r53.listHostedZones.getHostedZones

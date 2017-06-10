@@ -10,7 +10,7 @@ import com.amazonaws.services.cloudformation.model.DeleteStackRequest
 case class CloudFormationDalek(implicit region: Region) extends Dalek {
   def cfn = withRegion(new AmazonCloudFormationClient)
 
-  def fly = cfn.describeStacks.getStacks.asScala
+ override  def fly = cfn.describeStacks.getStacks.asScala
     .foreach { exterminate(_) }
 
   def exterminate(stack: Stack): Unit = {

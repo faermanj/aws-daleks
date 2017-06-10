@@ -12,7 +12,7 @@ import com.amazonaws.services.autoscaling.model.UpdateAutoScalingGroupRequest
 
 case class AutoScalingDalek(implicit region: Region) extends Dalek {
   def as = withRegion(new AmazonAutoScalingClient())
-  def fly = {
+  override def fly = {
     flyASGs
     flyLCs
   }

@@ -12,7 +12,7 @@ import com.amazonaws.services.elasticache.model.DeleteCacheClusterRequest
 case class ElastiCacheDalek(implicit region: Region) extends Dalek {
   val ecache = withRegion(new AmazonElastiCacheClient())
 
-  val fly = ecache.describeCacheClusters.getCacheClusters.asScala
+  override def fly = ecache.describeCacheClusters.getCacheClusters.asScala
     .foreach { exterminate(_) }
 
   def exterminate(cache: CacheCluster): Unit = {

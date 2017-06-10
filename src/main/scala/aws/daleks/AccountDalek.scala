@@ -8,7 +8,7 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 case class AccountDalek() extends Dalek {
   val excludedRegions = List(GovCloud,CN_NORTH_1)
   val regionss = Regions.values diff excludedRegions
-  def fly = {
+  override def fly = {
     flyRegions
     flyGlobal
   }

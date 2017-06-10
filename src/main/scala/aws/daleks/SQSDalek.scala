@@ -13,7 +13,7 @@ import com.amazonaws.services.sqs.AmazonSQSClient
 case class SQSDalek (implicit region: Region) extends Dalek {
   val sqs = withRegion(new AmazonSQSClient)
   
-  def fly = sqs.listQueues.getQueueUrls.asScala.foreach{exterminate}
+  override def fly = sqs.listQueues.getQueueUrls.asScala.foreach{exterminate}
   
   def exterminate(qurl:String):Unit = {
     println(s"${region} | ${qurl}")

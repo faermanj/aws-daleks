@@ -7,7 +7,7 @@ import scala.collection.JavaConverters._
 case class SGDalek (implicit region: Region) extends Dalek  {
     val ec2 = withRegion(new AmazonEC2Client())
 
-   def fly = flySGs
+   override def fly = flySGs
      def flySGs = {
     val sgs = ec2.describeSecurityGroups
       .getSecurityGroups

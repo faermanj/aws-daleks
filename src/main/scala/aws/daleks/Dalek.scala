@@ -4,16 +4,22 @@ import com.amazonaws.AmazonWebServiceClient
 import com.amazonaws.regions.Region
 import com.amazonaws.AmazonServiceException
 import scala.util.Try
+import rx.lang.scala._
 
-trait Dalek {
+abstract class Dalek {
+  type Landing = Map[String,String]
 
+ 
+  
   def withRegion[T <: AmazonWebServiceClient](client: T)(implicit region: Region): T = {
     client.setRegion(region)
     client
   }
 
-  def fly
+ 
+  def fly:Unit
 
+  
   def exterminate(f: () => _): Unit =
     if (!Dalek.good) Try {
       f()
