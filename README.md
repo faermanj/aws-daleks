@@ -22,14 +22,10 @@ Any other credential in the default credentials chain works: http://docs.aws.ama
 
 3- Just fly, don't exterminate (a.k.a dry run): 
 ```
-  AWS_ACCESS_KEY_ID='[YOUR_KEY]' \
-  AWS_SECRET_ACCESS_KEY='[YOUR_SECRET]' \ 
   sbt run
 ```
 
 4- EXTERMINATE!
 ```
-  AWS_ACCESS_KEY_ID='[YOUR_KEY]' \
-  AWS_SECRET_ACCESS_KEY='[YOUR_SECRET]' \ 
   sbt "run exterminate"
 ```
