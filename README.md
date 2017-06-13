@@ -6,7 +6,7 @@ This will iterate through all resources in your AWS Account and exterminate them
 
 **Just iterating through resources may incur in costs.**
 
-**Extermination is irreversible**
+**Extermination is irreversible.**
 
 
 1- Install SBT:
