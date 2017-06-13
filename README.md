@@ -1,6 +1,6 @@
 # Iterate and exterminate your AWS Account
 
-This will iterate through all resources in your AWS Account and exterminate them.
+This will iterate through all resources in your AWS Account and optionally exterminate them.
 
 **WARNING**
 
