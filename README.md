@@ -1,6 +1,10 @@
 # Iterate and exterminate your AWS Account
 
-This will iterate through all resources in your AWS Account and exterminate them
+This will iterate through all resources in your AWS Account and exterminate them.
+
+* WARNING *
+* Just iterating through resources may incur in costs. *
+* Extermination is irreversible *
 
 1- Install SBT:
 ```
