@@ -1,13 +1,16 @@
-# Iterate and exterminate your AWS Account
+# Iterate and exterminate a AWS Account
 
-AWS Daleks will iterate through resources in your AWS Account in reverse dependency order and optionally exterminate them.
+AWS Daleks will iterate through resources in a AWS Account in reverse dependency order and optionally exterminate them.
+
+**Disclaimer**
+
+This project is not sponsored, affiliated, supported or at all related to neither Amazon nor BBC.
 
 **WARNING**
 
-**Just iterating through resources may incur in costs.**
+**Iterating through resources may incur in costs.**
 
 **Extermination is irreversible.**
-
 
 1- Install SBT:
 ```
@@ -29,3 +32,17 @@ Any other credential in the default credentials chain works: http://docs.aws.ama
 ```
   sbt "run exterminate"
 ```
+
+    Exterminate!
+                   /
+              ___
+      D>=G==='   '.
+            |======|
+            |======|
+        )--/]IIIIII]
+           |_______|
+           C O O O D
+          C O  O  O D
+         C  O  O  O  D
+         C__O__O__O__D
+        [_____________]
