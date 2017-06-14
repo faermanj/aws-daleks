@@ -9,59 +9,29 @@ import com.amazonaws.services.elasticbeanstalk.model.EnvironmentDescription
 import com.amazonaws.services.elasticbeanstalk.model.TerminateEnvironmentRequest
 import com.amazonaws.services.elasticbeanstalk.model.ApplicationVersionDescription
 import com.amazonaws.services.elasticbeanstalk.model.DeleteApplicationVersionRequest
+import rx.lang.scala._
 
-case class ElasticBeanstalkDalek(implicit region: Region) extends Dalek {
+case class ElasticBeanstalkDalek(implicit region: Region) extends RxDalek[ApplicationDescription] {
   val eb = withRegion(new AWSElasticBeanstalkClient)
-
-  override def fly = {
-    flyEnvs
-    flyApps
-  }
-
-  def flyEnvs = eb.describeEnvironments
-    .getEnvironments
-    .asScala
-    .foreach { exterminate(_) }
   
-  def flyApps = eb.describeApplications
+  override def observe:Observable[ApplicationDescription] = eb.describeApplications
     .getApplications
-    .asScala
-    .foreach { 
-      flyVers(_) 
-      exterminate(_)
-    } 
-  
-  def flyVers(app: ApplicationDescription) = eb.describeApplicationVersions()
-    .getApplicationVersions
-    .asScala
-    .foreach { exterminate(_) }
-
-  def exterminate(app: ApplicationDescription): Unit = {
-
-    val appName = app.getApplicationName
-    println(s"${region} | ${appName}")
-    exterminate { () =>
-      eb.deleteApplication(
+    .asScala 
+    .toObservable
+    
+  override def exterminate(app:ApplicationDescription):Unit =   eb.deleteApplication(
         new DeleteApplicationRequest()
-          .withApplicationName(appName))
-    }
-  }
+          .withApplicationName(app.getApplicationName))
+          
+  override def describe(t:ApplicationDescription):Map[String,String] = 
+    Map("application"->t.getApplicationName)
 
-  def exterminate(env: EnvironmentDescription): Unit = {
-    val envId = env.getEnvironmentId
-    val envStatus = env.getStatus
-    println(s"${region} | ${envId}[${envStatus}]")
-    exterminate { () =>
-      if("Terminated" != envStatus)
-        eb.terminateEnvironment(new TerminateEnvironmentRequest().withEnvironmentId(envId))
-    }
+  override def flyDependencies(t:ApplicationDescription) = {
+    List(
+        ElasticBeanstalkVersionsDalek(),
+        ElasticBeanstalkEnvironmentDalek()).foreach(_.fly)
+    
   }
+  
 
-  def exterminate(ver:ApplicationVersionDescription): Unit = {
-    val label = ver.getVersionLabel
-    println(s"${region} | ${label}")
-    exterminate { () =>
-      eb.deleteApplicationVersion(new DeleteApplicationVersionRequest().withVersionLabel(label))
-    }
-  }
 }

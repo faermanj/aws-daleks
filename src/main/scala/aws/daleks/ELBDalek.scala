@@ -5,22 +5,20 @@ import scala.collection.JavaConverters._
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClient
 import com.amazonaws.services.elasticloadbalancing.model.LoadBalancerDescription
 import com.amazonaws.services.elasticloadbalancing.model.DeleteLoadBalancerRequest
+import rx.lang.scala._
 
-case class ELBDalek(implicit region: Region) extends Dalek {
+case class ELBDalek(implicit region: Region) extends RxDalek[LoadBalancerDescription] {
   val elb = withRegion(new AmazonElasticLoadBalancingClient)
-
-  //TODO:Paginate
-  override def fly = elb.describeLoadBalancers
+  
+  override def observe:Observable[LoadBalancerDescription] = elb.describeLoadBalancers
     .getLoadBalancerDescriptions
     .asScala
-    .foreach { exterminate }
+    .toObservable
+    
+  override def exterminate(t:LoadBalancerDescription):Unit =
+    elb.deleteLoadBalancer(new DeleteLoadBalancerRequest()
+        .withLoadBalancerName(t.getLoadBalancerName))
+  override def describe(t:LoadBalancerDescription):Map[String,String] = Map("lbName"->t.getLoadBalancerName)
 
-  def exterminate(lb: LoadBalancerDescription): Unit = {
-    val lbName = lb.getLoadBalancerName
-    println(s"${region} | ${lbName}")
-    exterminate { () =>
-      elb.deleteLoadBalancer(new DeleteLoadBalancerRequest()
-        .withLoadBalancerName(lbName))
-    }
-  }
+
 }

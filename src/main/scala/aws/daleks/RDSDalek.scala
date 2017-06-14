@@ -5,21 +5,20 @@ import com.amazonaws.services.rds.AmazonRDSClient
 import scala.collection.JavaConverters._
 import com.amazonaws.services.rds.model.DBInstance
 import com.amazonaws.services.rds.model.DeleteDBInstanceRequest
-
-case class RDSDalek(implicit region: Region) extends Dalek {
+import rx.lang.scala._
+case class RDSDalek(implicit region: Region) extends RxDalek[DBInstance] {
   val rds = withRegion(new AmazonRDSClient)
-  override def fly = rds.describeDBInstances
+  
+  override def observe:Observable[DBInstance] = rds.describeDBInstances
     .getDBInstances
     .asScala
-    .foreach { exterminate(_) }
-
-  def exterminate(dbi: DBInstance): Unit = {
-    val dbId = dbi.getDBInstanceIdentifier
-    println(s"${region} | ${dbId}")
-    exterminate { () =>
-      rds.deleteDBInstance(new DeleteDBInstanceRequest()
-        .withDBInstanceIdentifier(dbId)
+    .toObservable
+    
+  override def exterminate(ar:DBInstance):Unit = rds.deleteDBInstance(new DeleteDBInstanceRequest()
+        .withDBInstanceIdentifier(ar.getDBInstanceIdentifier)
         .withSkipFinalSnapshot(true))
-    }
-  }
+        
+  override def describe(ar:DBInstance):Map[String,String] = Map(
+    ("dbInstanceId"->ar.getDBInstanceIdentifier)    
+  )
 }

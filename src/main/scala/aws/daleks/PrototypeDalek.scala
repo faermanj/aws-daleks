@@ -7,7 +7,7 @@ import com.amazonaws.regions.Region
 case class PrototypeDalek(implicit region: Region)  extends RxDalek[Any] {
  
   override def observe:Observable[Any] = Observable.empty
-  override def exterminate(t:Any):Unit = {}
-  override def describe(t:Any):Map[String,String] = Map()
+  override def exterminate(ar:Any):Unit = {}
+  override def describe(ar:Any):Map[String,String] = Map()
     
 }
