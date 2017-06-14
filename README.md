@@ -2,7 +2,7 @@
 
 AWS Daleks will iterate through resources in a AWS Account in reverse dependency order and optionally exterminate them.
 
-**Disclaimer**
+**DISCLAIMER**
 
 This project is not sponsored, affiliated, supported or at all related to neither Amazon nor BBC.
 
