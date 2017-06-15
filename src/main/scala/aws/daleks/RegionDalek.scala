@@ -6,7 +6,7 @@ import com.amazonaws.auth.AWSCredentialsProvider
 
 case class RegionDalek(implicit val  region: Region) {
   def fly = List(
-//operations
+//composite services
     CloudFormationDalek(),
     ElasticBeanstalkDalek(),
 //distributed compute
@@ -17,15 +17,12 @@ case class RegionDalek(implicit val  region: Region) {
     ELBDalek(),
     EC2InstanceDalek(),    
 //data
+    ElastiCacheDalek(),
     S3BucketDalek(),
     RedshiftDalek(),
-    RDSDalek()
-//    DynamoDBDalek(),
-//    ElastiCacheDalek(),
-//    
-    
-
-//    
+    RDSDalek(),
+    DynamoDBDalek()
+//networking   
 //    EC2Dalek(),
 //    VPCDalek(),
 //    SGDalek()
