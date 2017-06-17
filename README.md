@@ -34,7 +34,7 @@ Any other credential in the default credentials chain works: http://docs.aws.ama
 The following resources are not exterminated:
 - IAM Users or Roles with names containing "DO-NOT-DELETE" or starts with a "Lord of The Rings" location (e.g. MordorOverlordRole).
 - IAM User used to execute
-
+<pre>
     Exterminate!
                    /
               ___
@@ -48,3 +48,4 @@ The following resources are not exterminated:
          C  O  O  O  D
          C__O__O__O__D
         [_____________]
+</pre>
