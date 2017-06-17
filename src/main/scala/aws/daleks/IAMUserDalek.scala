@@ -14,7 +14,7 @@ import scala.util.Try
 case class IAMUserDalek(implicit region: Region) extends RxDalek[User] {
   val iam = new AmazonIdentityManagementClient
 
-  val selfUser = iam.getUser().getUser
+  val selfUser = iam.getUser().getUser 
 
   override def observe: Observable[User] = iam
     .listUsers()
@@ -23,9 +23,9 @@ case class IAMUserDalek(implicit region: Region) extends RxDalek[User] {
     .toObservable
 
   override def mercy(u: User) = {
-    val isSelf = selfUser == u
+    val isSelf = selfUser == u 
     val isSpared = isSparedName(u.getUserName)
-    val mercy = isSelf || isSpared
+    val mercy = isSelf || isSpared 
     if (mercy) iam.listAttachedUserPolicies(
         new ListAttachedUserPoliciesRequest().withUserName(u.getUserName()))
         .getAttachedPolicies
