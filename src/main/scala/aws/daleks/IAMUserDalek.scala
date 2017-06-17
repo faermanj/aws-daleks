@@ -9,6 +9,7 @@ import com.amazonaws.services.identitymanagement.model.ListUserPoliciesRequest
 import com.amazonaws.services.identitymanagement.model.User
 import rx.lang.scala._
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 case class IAMUserDalek(implicit region: Region) extends RxDalek[User] {
   val iam = new AmazonIdentityManagementClient
@@ -21,32 +22,54 @@ case class IAMUserDalek(implicit region: Region) extends RxDalek[User] {
     .asScala
     .toObservable
 
-  def isSpared(u: User) = {
+  override def mercy(u: User) = {
     val isSelf = selfUser == u
     val isLOTRLoc = isLOTR(u.getUserName)
-    true || isSelf || isLOTRLoc //TODO: kill dependencies
+    val mercy = isSelf || isLOTRLoc
+    if (mercy) iam.listAttachedUserPolicies(
+        new ListAttachedUserPoliciesRequest().withUserName(u.getUserName()))
+        .getAttachedPolicies
+        .asScala
+        .map{ up => up.getPolicyName }
+        .foreach{ IAM.setMercyOnRole }
+    mercy
   }
 
-  override def exterminate(u: User): Unit = if (!isSpared(u)) {
+  override def exterminate(u: User): Unit = {
     IAMAccessKeyDalek(u).fly
-    //TODO: leaveGroups(u)
+    leaveGroups(u)
     detachUserPolicies(u)
-    iam.deleteLoginProfile(new DeleteLoginProfileRequest().withUserName(u.getUserName))
+    exterminateLoginProfile(u: User)
     iam.deleteUser(new DeleteUserRequest().withUserName(u.getUserName))
   }
 
-  
+  def exterminateLoginProfile(u: User): Unit = Try {
+    iam.getLoginProfile(new GetLoginProfileRequest().withUserName(u.getUserName)).getLoginProfile
+  }.foreach { lp =>
+    iam.deleteLoginProfile(new DeleteLoginProfileRequest().withUserName(lp.getUserName))
+  }
+
+  def leaveGroups(u: User): Unit =
+    iam.listGroupsForUser(
+      new ListGroupsForUserRequest().withUserName(u.getUserName))
+      .getGroups
+      .asScala
+      .foreach { g =>
+        iam.removeUserFromGroup(new RemoveUserFromGroupRequest()
+          .withGroupName(g.getGroupName)
+          .withUserName(u.getUserName))
+      }
 
   def detachUserPolicies(u: User): Unit = {
-    val userPolicies = iam.listUserPolicies(
-      new ListUserPoliciesRequest().withUserName(u.getUserName))
-      .getPolicyNames
+    val userPolicies = iam.listAttachedUserPolicies(
+      new ListAttachedUserPoliciesRequest().withUserName(u.getUserName()))
+      .getAttachedPolicies
       .asScala
-    userPolicies.foreach(up => iam.detachUserPolicy(new DetachUserPolicyRequest().withUserName(u.getUserName).withPolicyArn(up)))
+    userPolicies.foreach(ap => iam.detachUserPolicy(
+      new DetachUserPolicyRequest().withUserName(u.getUserName).withPolicyArn(ap.getPolicyArn)))
   }
 
   override def describe(u: User): Map[String, String] = Map(
-    ("userName" -> u.getUserName),
-    ("userSpared" -> isSpared(u).toString()))
+    ("userName" -> u.getUserName))
 
 }

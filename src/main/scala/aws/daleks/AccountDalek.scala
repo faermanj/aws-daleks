@@ -24,6 +24,8 @@ case class AccountDalek() extends Dalek {
             .foreach { _.fly }
             
   def flyGlobal = List(
-      IAMUserDalek()(null)
+      IAMInstanceProfilesDalek()(null),
+      IAMUserDalek()(null),
+      IAMRolesDalek()(null)
   ).foreach(_.fly)
 }

@@ -17,15 +17,25 @@ case class EC2InstanceDalek(implicit region: Region) extends RxDalek[Instance] {
   
   override def observe:Observable[Instance] = instances.toObservable
   
+  override def mercy(instance:Instance) = {
+    val instanceId = instance.getInstanceId
+    val isTerminated = instance.getState.getName == "terminated"
+    val termProtected = isDisableApiTermination(instanceId)
+    val mercy = isTerminated || termProtected
+    if(mercy){ 
+      val ip = instance.getIamInstanceProfile()
+      if (ip != null)
+        IAM.setMercyOnInstanceProfile(ip)
+    }
+    mercy
+  }
+  
   override def exterminate(instance:Instance):Unit = {
     val instanceId = instance.getInstanceId
-    val isTerminated = instance.getState.getName != "terminated"
-    val exterminate = isTerminated && (! isDisableApiTermination(instanceId))
-    if (exterminate){ 
         ec2.terminateInstances(
           new TerminateInstancesRequest()
             .withInstanceIds(instanceId))
-    }
+    
   }
   
   def isDisableApiTermination(instanceId:String) = ec2.describeInstanceAttribute(

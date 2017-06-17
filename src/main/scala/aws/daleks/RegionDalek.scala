@@ -1,4 +1,4 @@
-package aws.daleks
+ package aws.daleks
 
 import com.amazonaws.regions.Region
 import com.amazonaws.AmazonWebServiceClient

@@ -9,21 +9,24 @@ import com.amazonaws.services.elasticache.AmazonElastiCacheClient
 import com.amazonaws.services.elasticache.model.CacheCluster
 import com.amazonaws.services.elasticache.model.DeleteCacheClusterRequest
 import rx.lang.scala._
-
+import java.util.List
 //TODO: Consider pagination
 //TODO: Delete cache clusters with replication group
 case class ElastiCacheDalek(implicit region: Region) extends RxDalek[CacheCluster] {
   
   val ecache = withRegion(new AmazonElastiCacheClient())
 
-  override def observe:Observable[CacheCluster] = ecache.describeCacheClusters.getCacheClusters.asScala.toObservable
-  override def exterminate(ar:CacheCluster):Unit = 
-    if(ar.getReplicationGroupId == null)
-      ecache.deleteCacheCluster(new DeleteCacheClusterRequest()
-        .withCacheClusterId(ar.getCacheClusterId))
+  override def list:List[CacheCluster] = ecache.describeCacheClusters.getCacheClusters
 
+  override def mercy(ar:CacheCluster) = ! "available".equals(ar.getCacheClusterStatus)
+  
+  override def exterminate(ar:CacheCluster):Unit =
+    ecache.deleteCacheCluster(new DeleteCacheClusterRequest()
+        .withCacheClusterId(ar.getCacheClusterId))
+        
   override def describe(ar:CacheCluster):Map[String,String] = Map(
       ("cacheId"->ar.getCacheClusterId),
+      ("status" -> ar.getCacheClusterStatus),
       ("cacheNodes"->ar.getNumCacheNodes.toString()),
       ("replicationGroupId"->ar.getReplicationGroupId))
 }

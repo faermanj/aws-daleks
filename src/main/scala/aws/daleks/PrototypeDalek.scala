@@ -3,11 +3,13 @@ package aws.daleks
 import rx.lang.scala._
 import scala.collection.JavaConverters._
 import com.amazonaws.regions.Region
+import java.util.List
+import java.util.Collections
 
-case class PrototypeDalek(implicit region: Region)  extends RxDalek[Any] {
- 
-  override def observe:Observable[Any] = Observable.empty
-  override def exterminate(ar:Any):Unit = {}
-  override def describe(ar:Any):Map[String,String] = Map()
-    
+case class PrototypeDalek(implicit region: Region) extends RxDalek[Any] {
+
+  override def list(): List[Any] = Collections.emptyList()
+  override def exterminate(ar: Any) = {}
+  override def describe(ar: Any) = Map()
+
 }
