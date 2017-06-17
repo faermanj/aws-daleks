@@ -21,7 +21,7 @@ aws configure
 ```
 Any other credential in the default credentials chain works: http://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html
 
-3- Just fly, don't exterminate (a.k.a dry run): 
+3- Just iterate, don't exterminate (a.k.a dry run): 
 ```
   sbt run
 ```
@@ -32,7 +32,8 @@ Any other credential in the default credentials chain works: http://docs.aws.ama
 ```
 
 The following resources are not exterminated:
-- IAM Users or Roles with names containing "DO-NOT-DELETE" or starts with a "Lord of The Rings" location (e.g. MordorOverlordRole).
+- IAM Users or Roles with name containing "DO-NOT-DELETE"
+- IAM Users or Roles with name starting with a Lord of The Rings location (e.g. MordorOverlordRole).
 - IAM User used to execute
 - EC2 Instance with termination protection
 - EMR Clusters with termination protection
