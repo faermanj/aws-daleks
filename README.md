@@ -1,5 +1,3 @@
-# Iterate and exterminate a AWS Account
-
 AWS Daleks will iterate through resources in a AWS Account in reverse dependency order and optionally exterminate them.
 
 **DISCLAIMER**
