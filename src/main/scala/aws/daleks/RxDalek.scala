@@ -51,6 +51,8 @@ abstract class RxDalek[T](implicit region: Region) extends Dalek {
         case ((a1, a2), (b1, b2)) =>
           if ("region".equals(a1)) true
           else if ("region".equals(b1)) false
+          else if ("result".equals(a1)) false
+          else if ("result".equals(b1)) true
           else a1 < b1
       }
       .map { case (key, value) => s"${key}=${value}" }
@@ -62,4 +64,6 @@ abstract class RxDalek[T](implicit region: Region) extends Dalek {
   }.isEmpty
 
   def isDND(name: String) = name.toUpperCase.contains("DO-NOT-DELETE")
+  
+  def isSparedName(name:String) = isDND(name) || isLOTR(name)
 }

@@ -24,8 +24,8 @@ case class IAMUserDalek(implicit region: Region) extends RxDalek[User] {
 
   override def mercy(u: User) = {
     val isSelf = selfUser == u
-    val isLOTRLoc = isLOTR(u.getUserName)
-    val mercy = isSelf || isLOTRLoc
+    val isSpared = isSparedName(u.getUserName)
+    val mercy = isSelf || isSpared
     if (mercy) iam.listAttachedUserPolicies(
         new ListAttachedUserPoliciesRequest().withUserName(u.getUserName()))
         .getAttachedPolicies

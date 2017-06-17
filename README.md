@@ -33,6 +33,10 @@ Any other credential in the default credentials chain works: http://docs.aws.ama
   sbt "run exterminate"
 ```
 
+The following resources are not exterminated:
+- IAM Users or Roles with names containing "DO-NOT-DELETE" or starts with a "Lord of The Rings" location (e.g. MordorOverlordRole).
+- IAM User used to execute
+
     Exterminate!
                    /
               ___

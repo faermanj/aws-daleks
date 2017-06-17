@@ -21,23 +21,24 @@ case class EMRDalek(implicit region: Region) extends RxDalek[Cluster] {
     emr.describeCluster(
       new DescribeClusterRequest().withClusterId(clusterSum.getId)).getCluster
 
-  override def describe(cluster: Cluster):Map[String,String] = Map(("clusterId" -> cluster.getId),
+  override def mercy(cluster: Cluster) = {
+    val terminated = cluster.getStatus.getState.startsWith("TERM")
+    val termProtected = cluster.isTerminationProtected()
+    terminated || termProtected
+  }
+
+  override def describe(cluster: Cluster) = Map(("clusterId" -> cluster.getId),
     ("state" -> cluster.getStatus.getState),
     ("termProtected" -> cluster.getTerminationProtected.toString))
 
   def listActiveClusters =
     emr.listClusters.getClusters.asScala.map(toCluster)
 
-    
   override def observe: Observable[Cluster] =
     listActiveClusters.toObservable
 
-  override def exterminate(cluster:Cluster): Unit = {
-    val terminated = cluster.getStatus.getState.startsWith("TERM")
-    val termProtected = cluster.isTerminationProtected()      
-    if (! (terminated || termProtected)) emr.terminateJobFlows(
-      new TerminateJobFlowsRequest()
-        .withJobFlowIds(List(cluster.getId)
-          .asJava))
-  }
+  override def exterminate(cluster: Cluster): Unit = emr.terminateJobFlows(
+    new TerminateJobFlowsRequest()
+      .withJobFlowIds(List(cluster.getId).asJava))
+
 }

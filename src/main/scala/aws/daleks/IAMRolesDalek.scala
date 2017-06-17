@@ -80,6 +80,5 @@ case class IAMRolesDalek(implicit region: Region) extends RxDalek[Role] {
   override def mercy(ar: Role) =
     IAM.isMercyOnRole(ar.getRoleName) ||
       hasInstanceProfiles(ar) ||
-      isDND(ar.getRoleName) ||
-      isLOTR(ar.getRoleName)
+      isSparedName(ar.getRoleName) 
 }
