@@ -32,7 +32,7 @@ Any other credential in the default credentials chain works: http://docs.aws.ama
 ```
 
 The following resources are not exterminated:
-- The following resources if (name contains "DO-NOT-DELETE") OR (name starting with a Lord of The Rings location):
+- The following resources if (name contains "DO-NOT-DELETE", like "Important-DO-NOT-DELETE-PLS") OR (name starting with a Lord of The Rings location, like "MordorOverlordUser"):
 	- IAM Users
 	- IAM Roles
 	- Lambda Functions 
