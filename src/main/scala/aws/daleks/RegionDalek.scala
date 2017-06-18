@@ -12,6 +12,7 @@ case class RegionDalek(implicit val  region: Region) {
 //distributed compute
     EMRDalek(),
 //compute
+    LambdaDalek(),
     EC2LaunchConfigurationDalek(),
     AutoScalingDalek(),
     ELBDalek(),

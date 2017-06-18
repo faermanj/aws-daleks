@@ -8,7 +8,7 @@ import java.util.Collections
 
 case class PrototypeDalek(implicit region: Region) extends RxDalek[Any] {
 
-  override def list(): List[Any] = Collections.emptyList()
+  override def list() = Collections.emptyList()
   override def exterminate(ar: Any) = {}
   override def describe(ar: Any) = Map()
 
