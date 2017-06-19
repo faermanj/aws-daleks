@@ -6,10 +6,12 @@ import com.amazonaws.services.cloudformation.AmazonCloudFormationClient
 import com.amazonaws.services.cloudformation.model.Stack
 import com.amazonaws.services.cloudformation.model.DeleteStackRequest
 import rx.lang.scala._
+import com.amazonaws.services.cloudformation.AmazonCloudFormationClientBuilder
+import com.amazonaws.client.builder.AwsClientBuilder
 
 //TODO: Consider pagination
 case class CloudFormationDalek(implicit region: Region) extends RxDalek[Stack] {
-  def cfn = withRegion(new AmazonCloudFormationClient)
+  def cfn = AmazonCloudFormationClientBuilder.standard().withRegion(regions).build()
 
   override def observe: Observable[Stack] = cfn.describeStacks.getStacks.asScala.toObservable
   override def exterminate(stack: Stack): Unit =

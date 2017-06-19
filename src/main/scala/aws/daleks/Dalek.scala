@@ -15,7 +15,7 @@ trait Dalek {
  
   def fly:Unit
 
-  @deprecated  
+  @deprecated("Use RxDalek instead","2017-06-18T120331")
   def exterminate(f: () => _): Unit =
     if (!Dalek.good) Try {
       f()

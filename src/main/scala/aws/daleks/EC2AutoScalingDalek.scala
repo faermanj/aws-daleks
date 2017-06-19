@@ -10,9 +10,11 @@ import com.amazonaws.services.autoscaling.model.LaunchConfiguration
 import com.amazonaws.services.autoscaling.model.SetDesiredCapacityRequest
 import com.amazonaws.services.autoscaling.model.UpdateAutoScalingGroupRequest
 import rx.lang.scala._
+import com.amazonaws.services.autoscaling.AmazonAutoScalingClientBuilder
+import com.amazonaws.regions.Regions
 
 case class AutoScalingDalek(implicit region: Region) extends RxDalek[AutoScalingGroup] {
-  def as = withRegion(new AmazonAutoScalingClient())
+  def as = AmazonAutoScalingClientBuilder.standard().withRegion(regions).build();
 
   override def observe: Observable[AutoScalingGroup] = as.describeAutoScalingGroups()
     .getAutoScalingGroups

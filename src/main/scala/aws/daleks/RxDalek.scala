@@ -16,32 +16,40 @@ abstract class RxDalek[T](implicit region: Region) extends Dalek {
   val extra = scala.collection.mutable.Map[String, String]()
   if (region != null) extra += ("region" -> region.toString())
 
-  def observe: Observable[T] = list().asScala.toObservable
+  lazy val regions:Regions = Regions.fromName(region.toString)
 
+  
   def list(): List[T] = new ArrayList()
+  def observe: Observable[T] = list().asScala.toObservable
+  
   def exterminate(t: T): Unit = {}
   def describe(t: T): Map[String, String] = Map()
-
   def flyDependencies(t: T) = {}
-
   def mercy(t: T) = false
-
-  def fly = for (target <- observe) {
-    flyDependencies(target)
-    val description = describe(target)
-    val result =
-      if (mercy(target)) "mercy"
-      else if (Dalek.good) "good"
-      else Try {
-        exterminate(target)
-      } match {
-        case Success(s) => "exterminated"
-        case Failure(e) => {
-          e.printStackTrace()
-          s"failed[${e.getMessage}]"
-        }
+  def isSupported() = true 
+  
+  def fly = if (isSupported()) Try {
+      for (target <- observe) {
+        flyDependencies(target)
+        val description = describe(target)
+        val result = ("result" -> fly(target))
+        speak(description + result)
       }
-    speak(description + ("result" -> result))
+  } match {
+    case Success(s) => {}//speak( Map(("dalek" -> this.getClass.getName), ("result" -> "success")) ++extra)
+    case Failure(e) => speak( Map(("dalek" -> this.getClass.getName), ("result" -> s"failure[${e.getMessage}]")) ++extra)
+  } else speak( Map(("dalek" -> this.getClass.getName), ("result" -> s"not supported]")) ++extra)
+
+  def fly(target: T) = if (mercy(target)) "mercy"
+  else if (Dalek.good) "good"
+  else Try {
+    exterminate(target)
+  } match {
+    case Success(s) => "exterminated"
+    case Failure(e) => {
+      //e.printStackTrace()
+      s"failed[${e.getMessage}]"
+    }
   }
 
   def speak(description: Map[String, String]): Unit = {
@@ -64,6 +72,6 @@ abstract class RxDalek[T](implicit region: Region) extends Dalek {
   }.isEmpty
 
   def isDND(name: String) = name.toUpperCase.contains("DO-NOT-DELETE")
-  
-  def isSparedName(name:String) = isDND(name) || isLOTR(name)
+
+  def isSparedName(name: String) = isDND(name) || isLOTR(name)
 }
