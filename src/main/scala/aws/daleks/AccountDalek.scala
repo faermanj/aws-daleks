@@ -8,6 +8,9 @@ import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientB
 import com.amazonaws.services.identitymanagement.model.ListAccessKeysRequest
 import scala.collection.JavaConverters._
 import scala.util.Try
+import aws.daleks.security.IAMRolesDalek
+import aws.daleks.security.IAMUserDalek
+import aws.daleks.security.IAMInstanceProfilesDalek
 
 case class AccountDalek() extends Dalek {
   val excludedRegions = List(GovCloud,CN_NORTH_1)

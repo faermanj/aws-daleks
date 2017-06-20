@@ -5,6 +5,7 @@ import scala.collection.JavaConverters._
 import com.amazonaws.regions.Region
 import java.util.List
 import java.util.Collections
+import aws.daleks.RxDalek
 
 case class PrototypeDalek(implicit region: Region) extends RxDalek[Any] {
 
