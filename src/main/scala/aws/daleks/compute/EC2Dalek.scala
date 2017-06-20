@@ -36,7 +36,6 @@ case class EC2Dalek(implicit region: Region) extends Dalek {
   val spared = new ListBuffer[Instance]()
 
   override def fly = {
-    flyKeys
     flyENIs
     flyEIPs
   }

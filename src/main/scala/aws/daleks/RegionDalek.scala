@@ -28,8 +28,9 @@ case class RegionDalek(implicit val  region: Region) {
     ELBDalek(),
     EC2InstanceDalek(),
     EC2ImagesDalek(),
-//TODO: Spare Volumes In Use    EC2VolumesDalek(),
+    EC2VolumesDalek(),
     EC2SnapshotsDalek(),
+    EC2KeysDalek(),
 //data
     ElastiCacheDalek(),
     S3BucketDalek(),
