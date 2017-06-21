@@ -36,8 +36,11 @@ case class RegionDalek(implicit val  region: Region) {
     S3BucketDalek(),
     RedshiftDalek(),
     RDSDalek(),
-    DynamoDBDalek()
+    DynamoDBDalek(),
 //networking   
+    EC2EIPDalek(),
+    SGRulesDalek(),
+    SGDalek()
 //    EC2Dalek(),
 //    VPCDalek(),
 //    SGDalek()

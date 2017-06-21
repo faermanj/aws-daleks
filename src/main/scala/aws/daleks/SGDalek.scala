@@ -1,18 +1,28 @@
-package aws.daleks.compute
+package aws.daleks
 import com.amazonaws.services.ec2.model._
 import com.amazonaws.services.ec2._
 import com.amazonaws.regions.Region
 import scala.collection.JavaConverters._
-import aws.daleks.Dalek
 
-case class SGDalek (implicit region: Region) extends Dalek  {
-    val ec2 = withRegion(new AmazonEC2Client())
+case class SGDalek (implicit region: Region) extends RxDalek[SecurityGroup]  {
+   val ec2 = AmazonEC2ClientBuilder.standard().withRegion(regions).build()
+   
+  override def list() = ec2.describeSecurityGroups.getSecurityGroups
+  override def exterminate(ar: SecurityGroup) = ec2.deleteSecurityGroup(
+          new DeleteSecurityGroupRequest()
+            .withGroupId(ar.getGroupId))
+  override def describe(ar: SecurityGroup) = Map(
+      ("groupId"->ar.getGroupId)
+  )
+  
+    override def mercy(ar: SecurityGroup) = "default" == ar.getGroupName || EC2.isMercyOnSG(ar.getGroupId)
 
-   override def fly = flySGs
-     def flySGs = {
-    val sgs = ec2.describeSecurityGroups
+  
+ /*
+   
+   override def fly = ec2.describeSecurityGroups
       .getSecurityGroups
-      .asScala
+      
     sgs.foreach { flyRules }
     val sparedSGs:Set[String] = Set() //TODO: Spare SGs of spared instances
     sgs.foreach { exterminate(_, sparedSGs) }
@@ -65,5 +75,5 @@ case class SGDalek (implicit region: Region) extends Dalek  {
           .withIpPermissions(perm))
     }
   }
-
+*/
 }

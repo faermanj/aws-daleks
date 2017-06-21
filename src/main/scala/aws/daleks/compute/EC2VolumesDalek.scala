@@ -17,11 +17,12 @@ case class EC2VolumesDalek(implicit region: Region) extends RxDalek[Volume] {
   val ec2 = AmazonEC2ClientBuilder.standard().withRegion(regions).build()
 
   override def list() = ec2.describeVolumes().getVolumes
-  override def exterminate(ar: Volume) = ec2.deleteVolume(new DeleteVolumeRequest().withVolumeId(ar.getVolumeId))
-  override def describe(ar: Volume) = Map(("ar.getVolumeId" -> ar.getVolumeId))
-  override def mercy(ar: Volume) = ar.getAttachments.isEmpty()
+  override def exterminate(ar: Volume) =  
+    ec2.deleteVolume(new DeleteVolumeRequest().withVolumeId(ar.getVolumeId))
+    
+  override def describe(ar: Volume) = Map((
+       "volumeId" -> ar.getVolumeId),
+       ("state"->ar.getState))
+  
+       override def mercy(ar: Volume) = "available" != ar.getState
 }
-
-
-
-

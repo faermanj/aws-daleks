@@ -6,9 +6,10 @@ import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient
 
 object IAM {
   val iam = new AmazonIdentityManagementClient
-
-  val roles = scala.collection.mutable.SortedSet[String]()
+  
   val instanceProfiles = scala.collection.mutable.SortedSet[String]()
+  val roles = scala.collection.mutable.SortedSet[String]()
+  
 
   def setMercyOnRole(roleName: String) = this.synchronized {
     roles += roleName

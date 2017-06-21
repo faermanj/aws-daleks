@@ -7,6 +7,7 @@ import com.amazonaws.services.ec2.model._
 import com.amazonaws.services.ec2._
 import aws.daleks.security.IAM
 import aws.daleks.RxDalek
+import aws.daleks.EC2
 
 case class EC2InstanceDalek(implicit region: Region) extends RxDalek[Instance] {
   val ec2 = AmazonEC2ClientBuilder.standard().withRegion(regions).build()
@@ -27,6 +28,9 @@ case class EC2InstanceDalek(implicit region: Region) extends RxDalek[Instance] {
       val ip = instance.getIamInstanceProfile()
       if (ip != null)
         IAM.setMercyOnInstanceProfile(ip)
+      instance.getSecurityGroups.asScala.foreach { sg =>
+        EC2.setMercyOnSG(sg.getGroupId)
+      }
     }
     mercy
   }

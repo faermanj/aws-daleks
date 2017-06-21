@@ -38,7 +38,7 @@ abstract class RxDalek[T](implicit region: Region) extends Dalek {
   } match {
     case Success(s) => {}//speak( Map(("dalek" -> this.getClass.getName), ("result" -> "success")) ++extra)
     case Failure(e) => speak( Map(("dalek" -> this.getClass.getName), ("result" -> s"failure[${e.getMessage}]")) ++extra)
-  } else speak( Map(("dalek" -> this.getClass.getName), ("result" -> s"not supported]")) ++extra)
+  } else speak( Map(("dalek" -> this.getClass.getName), ("result" -> s"not supported")) ++extra)
 
   def fly(target: T) = if (mercy(target)) "mercy"
   else if (Dalek.good) "good"
