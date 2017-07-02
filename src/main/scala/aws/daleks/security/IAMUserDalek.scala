@@ -17,9 +17,10 @@ import com.amazonaws.services.identitymanagement.model.User
 import aws.daleks.RxDalek
 import rx.lang.scala.Observable
 import rx.lang.scala.ObservableExtensions
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder
 
 case class IAMUserDalek(implicit region: Region) extends RxDalek[User] {
-  val iam = new AmazonIdentityManagementClient
+  val iam = AmazonIdentityManagementClientBuilder.defaultClient()
 
   val selfUser = iam.getUser().getUser 
 

@@ -20,7 +20,7 @@ import com.amazonaws.services.s3.model.BucketVersioningConfiguration
 import aws.daleks.storage.S3ObjectVersionDalek
 
 case class S3BucketDalek(implicit region: Region) extends RxDalek[Bucket] {
-  val s3 = new AmazonS3Client
+  val s3 = AmazonS3ClientBuilder.defaultClient()
 
   val regionBuckets = s3.listBuckets().asScala.filter { bucket =>
     val locStr = s3.getBucketLocation(bucket.getName)

@@ -5,23 +5,21 @@ import com.amazonaws.services.route53.AmazonRoute53Client
 import com.amazonaws.services.route53.model.HostedZone
 import com.amazonaws.services.route53.model.DeleteHostedZoneRequest
 import aws.daleks.Dalek
+import aws.daleks.RxDalek
+import com.amazonaws.services.route53.AmazonRoute53ClientBuilder
+import com.amazonaws.regions.Region
 
-case class Route53Dalek() extends Dalek {
-  val r53 = new AmazonRoute53Client()
+case class Route53Dalek(implicit region: Region) extends RxDalek[HostedZone] {
+  val r53 = AmazonRoute53ClientBuilder.defaultClient()
 
-  override def fly = flyZones
-  
+  override def list() = r53.listHostedZones.getHostedZones
+  override def exterminate(ar: HostedZone) =
+          r53.deleteHostedZone(new DeleteHostedZoneRequest().withId(ar.getId))
+          
+  override def describe(ar: HostedZone) = Map(
+      ("zoneId"->ar.getId)
+      
+  )
 
-  def flyZones = r53.listHostedZones.getHostedZones
-    .asScala
-    .foreach { exterminate(_) }
-
-  
-  def exterminate(zone: HostedZone): Unit = {
-    val zoneId = zone.getId
-    println(s"${zoneId}")
-    exterminate { () =>
-      r53.deleteHostedZone(new DeleteHostedZoneRequest().withId(zoneId))
-    }
-  }
+ 
 }

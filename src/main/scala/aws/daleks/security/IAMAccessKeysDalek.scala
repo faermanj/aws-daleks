@@ -9,9 +9,10 @@ import com.amazonaws.services.identitymanagement.model.DeleteAccessKeyRequest
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient
 import com.amazonaws.services.identitymanagement.model.User
 import aws.daleks.RxDalek
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder
 
 case class IAMAccessKeyDalek(user:User)(implicit region: Region)  extends RxDalek[AccessKeyMetadata] {
-  val iam = new AmazonIdentityManagementClient
+  val iam = AmazonIdentityManagementClientBuilder.defaultClient()
   
   override def observe:Observable[AccessKeyMetadata] = iam.listAccessKeys(
         new ListAccessKeysRequest().withUserName(user.getUserName))

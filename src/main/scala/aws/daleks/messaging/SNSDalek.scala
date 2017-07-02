@@ -7,22 +7,18 @@ import com.amazonaws.services.sns.model.ListTopicsResult
 import com.amazonaws.services.sns.model.DeleteTopicRequest
 import com.amazonaws.services.sns.model.Topic
 import aws.daleks.Dalek
+import com.amazonaws.services.sns.AmazonSNSClientBuilder
+import aws.daleks.RxDalek
 
-case class SNSDalek (implicit region: Region) extends Dalek {
-  val sns = withRegion(new AmazonSNSClient)
+case class SNSDalek (implicit region: Region) extends RxDalek[Topic] {
+  val sns = AmazonSNSClientBuilder.standard().withRegion(regions).build()
   
-  override def fly = fly(sns.listTopics)
+  override def list() = sns.listTopics.getTopics
   
-  def fly(trs:ListTopicsResult) =  {
-    //TODO:Paginate
-    trs.getTopics.asScala.foreach{exterminate}
-  }
-
-  def exterminate(topic:Topic):Unit = {
-    val topicArn = topic.getTopicArn
-    println(s"${region} | ${topicArn}")
-    exterminate { () => 
-      sns.deleteTopic(new DeleteTopicRequest().withTopicArn(topicArn))  
-    }
-  }
+  override def exterminate(ar: Topic) = sns.deleteTopic(
+      new DeleteTopicRequest().withTopicArn(ar.getTopicArn))
+  
+  override def describe(ar: Topic) = Map(
+  ("topicArn"->ar.getTopicArn)    
+  )
 }

@@ -13,6 +13,7 @@ import aws.daleks.analytics.EMRDalek
 import aws.daleks.compute.LambdaDalek
 import aws.daleks.database.RDSDalek
 import aws.daleks.analytics.RedshiftDalek
+import aws.daleks.ai._
 
 case class RegionDalek(implicit val  region: Region) {
   def fly = List(
@@ -31,6 +32,11 @@ case class RegionDalek(implicit val  region: Region) {
     EC2VolumesDalek(),
     EC2SnapshotsDalek(),
     EC2KeysDalek(),
+//AI
+    MLEvalDalek(),
+    MLBatchDalek(),
+    MLModelDalek(),
+    MLDatasourcesDalek(),
 //data
     ElastiCacheDalek(),
     S3BucketDalek(),

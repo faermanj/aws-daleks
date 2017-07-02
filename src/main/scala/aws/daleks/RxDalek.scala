@@ -14,9 +14,11 @@ import scala.util.Success
 
 abstract class RxDalek[T](implicit region: Region) extends Dalek {
   val extra = scala.collection.mutable.Map[String, String]()
-  if (region != null) extra += ("region" -> region.toString())
 
-  lazy val regions:Regions = Regions.fromName(region.toString)
+  val regions:Regions = if (region != null){
+    extra += ("region" -> region.toString())
+    Regions.fromName(region.toString)
+  } else Regions.US_EAST_1 //TODO Regions.DEFAULT_REGION
 
   
   def list(): List[T] = new ArrayList()
@@ -28,7 +30,7 @@ abstract class RxDalek[T](implicit region: Region) extends Dalek {
   def mercy(t: T) = false
   def isSupported() = true 
   
-  def fly = if (isSupported()) Try {
+  def fly:Unit = if (isSupported()) Try {
       for (target <- observe) {
         flyDependencies(target)
         val description = describe(target)
@@ -38,9 +40,9 @@ abstract class RxDalek[T](implicit region: Region) extends Dalek {
   } match {
     case Success(s) => {}//speak( Map(("dalek" -> this.getClass.getName), ("result" -> "success")) ++extra)
     case Failure(e) => speak( Map(("dalek" -> this.getClass.getName), ("result" -> s"failure[${e.getMessage}]")) ++extra)
-  } else speak( Map(("dalek" -> this.getClass.getName), ("result" -> s"not supported")) ++extra)
+  } else debug( Map(("dalek" -> this.getClass.getName), ("result" -> s"not supported")) ++extra)
 
-  def fly(target: T) = if (mercy(target)) "mercy"
+  def fly(target: T):String = if (mercy(target)) "mercy"
   else if (Dalek.good) "good"
   else Try {
     exterminate(target)
@@ -52,7 +54,7 @@ abstract class RxDalek[T](implicit region: Region) extends Dalek {
     }
   }
 
-  def speak(description: Map[String, String]): Unit = {
+  def log(description: Map[String, String]): Unit = {
     println((description ++ extra)
       .toSeq
       .sortWith {
@@ -66,6 +68,10 @@ abstract class RxDalek[T](implicit region: Region) extends Dalek {
       .map { case (key, value) => s"${key}=${value}" }
       .mkString(", "))
   }
+  
+  def speak = log _
+  
+  def debug(description: Map[String, String]): Unit = {}
 
   def isLOTR(name: String) = !locations.find { loc =>
     name.toUpperCase.startsWith(loc)

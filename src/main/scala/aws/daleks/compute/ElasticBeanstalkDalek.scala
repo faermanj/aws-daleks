@@ -10,9 +10,10 @@ import com.amazonaws.services.elasticbeanstalk.model.DeleteApplicationRequest
 import aws.daleks.RxDalek
 import rx.lang.scala.Observable
 import rx.lang.scala.ObservableExtensions
+import com.amazonaws.services.elasticbeanstalk.AWSElasticBeanstalkClientBuilder
 
 case class ElasticBeanstalkDalek(implicit region: Region) extends RxDalek[ApplicationDescription] {
-  val eb = withRegion(new AWSElasticBeanstalkClient)
+  val eb =  AWSElasticBeanstalkClientBuilder.standard().withRegion(regions).build()
   
   override def observe:Observable[ApplicationDescription] = eb.describeApplications()
     .getApplications

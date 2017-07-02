@@ -11,9 +11,10 @@ import com.amazonaws.services.identitymanagement.model.InstanceProfile
 import com.amazonaws.services.identitymanagement.model.RemoveRoleFromInstanceProfileRequest
 
 import aws.daleks.RxDalek
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder
 
 case class IAMInstanceProfilesDalek(implicit region: Region) extends RxDalek[InstanceProfile] {
-  val iam = new AmazonIdentityManagementClient
+  val iam = AmazonIdentityManagementClientBuilder.defaultClient()
 
   override def list(): List[InstanceProfile] = iam.listInstanceProfiles().getInstanceProfiles
   override def mercy(ar: InstanceProfile) = IAM.isMercyOnInstanceProfile(ar.getInstanceProfileId)

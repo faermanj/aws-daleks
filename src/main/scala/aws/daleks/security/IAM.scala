@@ -3,9 +3,10 @@ package aws.daleks.security
 import scala.collection.JavaConverters._
 import com.amazonaws.services.ec2.model.IamInstanceProfile
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClient
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder
 
 object IAM {
-  val iam = new AmazonIdentityManagementClient
+  val iam = AmazonIdentityManagementClientBuilder.defaultClient()
   
   val instanceProfiles = scala.collection.mutable.SortedSet[String]()
   val roles = scala.collection.mutable.SortedSet[String]()

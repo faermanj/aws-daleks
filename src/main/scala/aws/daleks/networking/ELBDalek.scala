@@ -7,9 +7,10 @@ import com.amazonaws.services.elasticloadbalancing.model.LoadBalancerDescription
 import com.amazonaws.services.elasticloadbalancing.model.DeleteLoadBalancerRequest
 import rx.lang.scala._
 import aws.daleks.RxDalek
+import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClientBuilder
 
 case class ELBDalek(implicit region: Region) extends RxDalek[LoadBalancerDescription] {
-  val elb = withRegion(new AmazonElasticLoadBalancingClient)
+  val elb = AmazonElasticLoadBalancingClientBuilder.standard().withRegion(regions).build()
   
   override def observe:Observable[LoadBalancerDescription] = elb.describeLoadBalancers
     .getLoadBalancerDescriptions

@@ -5,27 +5,22 @@ import com.amazonaws.services.redshift._
 import com.amazonaws.services.redshift.model._
 import scala.collection.JavaConverters._
 import aws.daleks.Dalek
+import aws.daleks.RxDalek
 
 
-case class RedshiftDalek (implicit region: Region) extends Dalek {
-  val redshift = withRegion(new AmazonRedshiftClient)
+case class RedshiftDalek (implicit region: Region) extends RxDalek[Cluster] {
+  val redshift = AmazonRedshiftClientBuilder.standard().withRegion(regions).build()
   
- override  def fly = {
-    val clusters = redshift
+  override def list = redshift
       .describeClusters
       .getClusters
-      .asScala
-      .map(exterminate)
-  }
-  
-  def exterminate(cluster:Cluster):Unit = {
-     val clusterId = cluster.getClusterIdentifier
-     println(s"${region} | ${clusterId}")
-     exterminate { () =>
-       redshift.deleteCluster(new DeleteClusterRequest()
+      
+  override def exterminate(ar: Cluster) = redshift.deleteCluster(new DeleteClusterRequest()
        .withSkipFinalClusterSnapshot(true)
-       .withClusterIdentifier(clusterId))
-    }  
- }
+       .withClusterIdentifier(ar.getClusterIdentifier))
+       
+  override def describe(ar: Cluster) = Map(
+    ("clusterIdentifier"->ar.getClusterIdentifier)    
+  )
   
 }

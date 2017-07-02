@@ -8,11 +8,14 @@ import com.amazonaws.services.elasticache.model.DeleteCacheClusterRequest
 import rx.lang.scala._
 import java.util.List
 import aws.daleks.RxDalek
+import com.amazonaws.services.elasticache.AmazonElastiCacheClientBuilder
+
+
 //TODO: Consider pagination
 //TODO: Delete cache clusters with replication group
 case class ElastiCacheDalek(implicit region: Region) extends RxDalek[CacheCluster] {
   
-  val ecache = withRegion(new AmazonElastiCacheClient())
+  val ecache = AmazonElastiCacheClientBuilder.standard().withRegion(regions).build()
 
   override def list:List[CacheCluster] = ecache.describeCacheClusters.getCacheClusters
 

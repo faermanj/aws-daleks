@@ -11,12 +11,14 @@ import scala.util.Try
 import aws.daleks.security.IAMRolesDalek
 import aws.daleks.security.IAMUserDalek
 import aws.daleks.security.IAMInstanceProfilesDalek
+import aws.daleks.management.CloudFormationDalek
+import aws.daleks.networking.CloudFrontDalek
 
-case class AccountDalek() extends Dalek {
+case class AccountDalek() {
   val excludedRegions = List(GovCloud,CN_NORTH_1)
   val regionss = Regions.values diff excludedRegions
   
-  override def fly = {
+  def fly = {
     flyRegions
     flyGlobal
   }
@@ -26,7 +28,8 @@ case class AccountDalek() extends Dalek {
             .map {implicit region => RegionDalek()}
             .foreach { _.fly }
             
-  def flyGlobal = List(
+  def flyGlobal =  List(CloudFrontDalek()(null)).foreach(_.fly)
+  def flyGlobal2 = List(
       IAMInstanceProfilesDalek()(null),
       IAMUserDalek()(null),
       IAMRolesDalek()(null)
