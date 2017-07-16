@@ -84,5 +84,10 @@ class RxDalek[T] extends Dalek[T] {
     extra += ("region" -> region.toString())
     Regions.fromName(region.toString)
   } else Regions.US_EAST_1 //TODO Regions.DEFAULT_REGION
+  
+  def withRegion(region: Region):this.type = {
+    this.region = region
+    this
+  }
 
 }

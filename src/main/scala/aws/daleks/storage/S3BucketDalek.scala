@@ -15,7 +15,7 @@ import rx.lang.scala.ObservableExtensions
 
 case class S3BucketDalek() extends RxDalek[Bucket] {
   
-  val s3 = AmazonS3ClientBuilder.defaultClient()
+  val s3 = AmazonS3ClientBuilder.standard().withRegion(regions).build()
 
   def regionOf(bucket:Bucket) = 
     S3Region.fromValue(s3.getBucketLocation(bucket.getName)).toAWSRegion()
@@ -38,6 +38,8 @@ case class S3BucketDalek() extends RxDalek[Bucket] {
     s3.deleteBucket(bucketName)
   }
   
-  override def flyDependencies(bucket: Bucket) = List(S3ObjectVersionDalek(bucket)).foreach(_.fly)
+  override def flyDependencies(bucket: Bucket) = List(
+      S3ObjectVersionDalek(bucket).withRegion(region)
+   ).foreach(_.fly)
 
 }
