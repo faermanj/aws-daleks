@@ -10,7 +10,7 @@ import com.amazonaws.services.machinelearning.model._
 import com.amazonaws.services.machinelearning.AmazonMachineLearningClient
 import com.amazonaws.services.machinelearning.AmazonMachineLearning
 
-case class MLModelDalek(implicit region: Region) extends RxDalek[MLModel] {
+case class MLModelDalek() extends RxDalek[MLModel] {
   val aml = AmazonMachineLearningClient.builder().withRegion(regions).build()
   
   override def list() = aml.describeMLModels().getResults

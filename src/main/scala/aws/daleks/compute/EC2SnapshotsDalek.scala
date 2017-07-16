@@ -15,7 +15,7 @@ import com.amazonaws.services.ec2.model.Snapshot
 import com.amazonaws.services.ec2.model.DeleteSnapshotRequest
 import com.amazonaws.services.ec2.model.DescribeSnapshotsRequest
 
-case class EC2SnapshotsDalek(implicit region: Region) extends RxDalek[Snapshot] {
+case class EC2SnapshotsDalek() extends RxDalek[Snapshot] {
   val ec2 = AmazonEC2ClientBuilder.standard().withRegion(regions).build()
 
   override def list() = ec2.describeSnapshots(new DescribeSnapshotsRequest().withOwnerIds("self")).getSnapshots

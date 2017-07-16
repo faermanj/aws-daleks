@@ -11,7 +11,7 @@ import com.amazonaws.services.identitymanagement.model.User
 import aws.daleks.RxDalek
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder
 
-case class IAMAccessKeyDalek(user:User)(implicit region: Region)  extends RxDalek[AccessKeyMetadata] {
+case class IAMAccessKeyDalek(user:User) extends RxDalek[AccessKeyMetadata] {
   val iam = AmazonIdentityManagementClientBuilder.defaultClient()
   
   override def observe:Observable[AccessKeyMetadata] = iam.listAccessKeys(

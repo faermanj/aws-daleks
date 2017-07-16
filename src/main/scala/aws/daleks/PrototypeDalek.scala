@@ -7,7 +7,7 @@ import java.util.List
 import java.util.Collections
 //import aws.daleks.RxDalek
 
-case class PrototypeDalek(implicit region: Region) extends RxDalek[Any] {
+case class PrototypeDalek() extends RxDalek[Any] {
 
   override def list() = Collections.emptyList()
   override def exterminate(ar: Any) = {}

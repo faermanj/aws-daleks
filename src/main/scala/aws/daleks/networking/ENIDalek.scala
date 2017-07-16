@@ -12,7 +12,7 @@ import com.amazonaws.services.ec2.model.NetworkInterfaceStatus
 import com.amazonaws.services.ec2.model.DeleteNetworkInterfaceRequest
 
 
-case class ENIDalek (implicit region: Region) extends RxDalek[NetworkInterface] {
+case class ENIDalek () extends RxDalek[NetworkInterface] {
   val ec2 = AmazonEC2ClientBuilder.standard().withRegion(regions).build()
 
   override def list() = ec2.describeNetworkInterfaces.getNetworkInterfaces

@@ -4,12 +4,11 @@ import scala.collection.JavaConverters._
 import com.amazonaws.services.route53.AmazonRoute53Client
 import com.amazonaws.services.route53.model.HostedZone
 import com.amazonaws.services.route53.model.DeleteHostedZoneRequest
-import aws.daleks.Dalek
 import aws.daleks.RxDalek
 import com.amazonaws.services.route53.AmazonRoute53ClientBuilder
 import com.amazonaws.regions.Region
 
-case class Route53Dalek(implicit region: Region) extends RxDalek[HostedZone] {
+case class Route53Dalek() extends RxDalek[HostedZone] {
   val r53 = AmazonRoute53ClientBuilder.defaultClient()
 
   override def list() = r53.listHostedZones.getHostedZones

@@ -13,7 +13,7 @@ import com.amazonaws.services.ec2.model.Volume
 import com.amazonaws.services.ec2.model.DeleteVolumeRequest
 import com.amazonaws.services.ec2.model.Snapshot
 import com.amazonaws.services.ec2.model.DeleteSnapshotRequest
-case class EC2VolumesDalek(implicit region: Region) extends RxDalek[Volume] {
+case class EC2VolumesDalek() extends RxDalek[Volume] {
   val ec2 = AmazonEC2ClientBuilder.standard().withRegion(regions).build()
 
   override def list() = ec2.describeVolumes().getVolumes

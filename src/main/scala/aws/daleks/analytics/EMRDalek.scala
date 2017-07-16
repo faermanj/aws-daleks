@@ -10,8 +10,8 @@ import rx.lang.scala._
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClientBuilder
 import aws.daleks.RxDalek
 
-case class EMRDalek(implicit region: Region) extends RxDalek[Cluster] {
-  val emr = AmazonElasticMapReduceClientBuilder.standard().withRegion(region.getName).build()
+case class EMRDalek() extends RxDalek[Cluster] {
+  val emr = AmazonElasticMapReduceClientBuilder.standard().withRegion(regions).build()
 
   def toCluster(clusterSum: ClusterSummary): Cluster =
     emr.describeCluster(

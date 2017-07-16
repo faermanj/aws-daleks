@@ -8,7 +8,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClientBuilder
 import aws.daleks.RxDalek
 
 //TODO: Consider pagination
-case class DynamoDBDalek (implicit region: Region) extends RxDalek[String] {
+case class DynamoDBDalek() extends RxDalek[String] {
   val ddb = AmazonDynamoDBAsyncClientBuilder.standard().withRegion(regions).build();
   
   override def observe:Observable[String] = ddb.listTables.getTableNames.asScala.toObservable

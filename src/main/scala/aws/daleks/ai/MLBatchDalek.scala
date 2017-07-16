@@ -10,7 +10,7 @@ import com.amazonaws.services.machinelearning.model._
 import com.amazonaws.services.machinelearning.AmazonMachineLearningClient
 import com.amazonaws.services.machinelearning.AmazonMachineLearning
 
-case class MLBatchDalek(implicit region: Region) extends RxDalek[BatchPrediction] {
+case class MLBatchDalek() extends RxDalek[BatchPrediction] {
   val aml = AmazonMachineLearningClient.builder().withRegion(regions).build()
   
   override def list() = aml.describeBatchPredictions().getResults

@@ -12,7 +12,7 @@ import rx.lang.scala.Observable
 import rx.lang.scala.ObservableExtensions
 import com.amazonaws.services.elasticbeanstalk.AWSElasticBeanstalkClientBuilder
 
-case class ElasticBeanstalkDalek(implicit region: Region) extends RxDalek[ApplicationDescription] {
+case class ElasticBeanstalkDalek() extends RxDalek[ApplicationDescription] {
   val eb =  AWSElasticBeanstalkClientBuilder.standard().withRegion(regions).build()
   
   override def observe:Observable[ApplicationDescription] = eb.describeApplications()

@@ -12,38 +12,34 @@ import scala.util.Try
 import scala.util.Failure
 import scala.util.Success
 
-abstract class RxDalek[T](implicit region: Region) extends Dalek {
+class Dalek[T] {
+
   val extra = scala.collection.mutable.Map[String, String]()
 
-  val regions:Regions = if (region != null){
-    extra += ("region" -> region.toString())
-    Regions.fromName(region.toString)
-  } else Regions.US_EAST_1 //TODO Regions.DEFAULT_REGION
-
-  
   def list(): List[T] = new ArrayList()
   def observe: Observable[T] = list().asScala.toObservable
-  
+
   def exterminate(t: T): Unit = {}
   def describe(t: T): Map[String, String] = Map()
   def flyDependencies(t: T) = {}
   def mercy(t: T) = false
-  def isSupported() = true 
-  
-  def fly:Unit = if (isSupported()) Try {
-      for (target <- observe) {
-        flyDependencies(target)
-        val description = describe(target)
-        val result = ("result" -> fly(target))
-        speak(description + result)
-      }
-  } match {
-    case Success(s) => {}//speak( Map(("dalek" -> this.getClass.getName), ("result" -> "success")) ++extra)
-    case Failure(e) => speak( Map(("dalek" -> this.getClass.getName), ("result" -> s"failure[${e.getMessage}]")) ++extra)
-  } else debug( Map(("dalek" -> this.getClass.getName), ("result" -> s"not supported")) ++extra)
+  def isSupported() = true
 
-  def fly(target: T):String = if (mercy(target)) "mercy"
-  else if (Dalek.good) "good"
+  def fly: Unit = if (isSupported()) Try {
+    for (target <- observe) {
+      flyDependencies(target)
+      val description = describe(target)
+      val result = ("result" -> fly(target))
+      speak(description + result)
+    }
+  } match {
+    case Success(s) => {} //speak( Map(("dalek" -> this.getClass.getName), ("result" -> "success")) ++extra)
+    case Failure(e) => speak(Map(("dalek" -> this.getClass.getName), ("result" -> s"failure[${e.getMessage}]")) ++ extra)
+  }
+  else debug(Map(("dalek" -> this.getClass.getName), ("result" -> s"not supported")) ++ extra)
+
+  def fly(target: T): String = if (mercy(target)) "mercy"
+  else if (Daleks.good) "good"
   else Try {
     exterminate(target)
   } match {
@@ -68,9 +64,9 @@ abstract class RxDalek[T](implicit region: Region) extends Dalek {
       .map { case (key, value) => s"${key}=${value}" }
       .mkString(", "))
   }
-  
+
   def speak = log _
-  
+
   def debug(description: Map[String, String]): Unit = {}
 
   def isLOTR(name: String) = !locations.find { loc =>
@@ -80,4 +76,13 @@ abstract class RxDalek[T](implicit region: Region) extends Dalek {
   def isDND(name: String) = name.toUpperCase.contains("DO-NOT-DELETE")
 
   def isSparedName(name: String) = isDND(name) || isLOTR(name)
+}
+
+class RxDalek[T] extends Dalek[T] {
+  var region: Region = null
+  def regions: Regions = if (region != null) {
+    extra += ("region" -> region.toString())
+    Regions.fromName(region.toString)
+  } else Regions.US_EAST_1 //TODO Regions.DEFAULT_REGION
+
 }

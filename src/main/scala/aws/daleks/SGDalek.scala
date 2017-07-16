@@ -4,7 +4,7 @@ import com.amazonaws.services.ec2._
 import com.amazonaws.regions.Region
 import scala.collection.JavaConverters._
 
-case class SGDalek (implicit region: Region) extends RxDalek[SecurityGroup]  {
+case class SGDalek () extends RxDalek[SecurityGroup]  {
    val ec2 = AmazonEC2ClientBuilder.standard().withRegion(regions).build()
    
   override def list() = ec2.describeSecurityGroups.getSecurityGroups

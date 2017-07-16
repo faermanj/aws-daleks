@@ -9,7 +9,7 @@ import rx.lang.scala._
 import com.amazonaws.services.autoscaling.AmazonAutoScalingClientBuilder
 import aws.daleks.RxDalek
 
-case class AutoScalingDalek(implicit region: Region) extends RxDalek[AutoScalingGroup] {
+case class AutoScalingDalek() extends RxDalek[AutoScalingGroup] {
   def as = AmazonAutoScalingClientBuilder.standard().withRegion(regions).build();
 
   override def observe: Observable[AutoScalingGroup] = as.describeAutoScalingGroups()

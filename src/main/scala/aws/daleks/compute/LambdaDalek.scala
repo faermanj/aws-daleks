@@ -9,7 +9,7 @@ import com.amazonaws.services.lambda.AWSLambda
 import com.amazonaws.services.lambda.AWSLambdaClientBuilder
 import aws.daleks.RxDalek
 
-case class LambdaDalek(implicit region: Region) extends RxDalek[FunctionConfiguration] {
+case class LambdaDalek() extends RxDalek[FunctionConfiguration] {
   val lambda = AWSLambdaClientBuilder.standard().withRegion(regions).build
 
   override def list() = lambda.listFunctions().getFunctions()

@@ -9,7 +9,7 @@ import com.amazonaws.services.elasticbeanstalk.model.DeleteApplicationVersionReq
 import aws.daleks.RxDalek
 import com.amazonaws.services.elasticbeanstalk.AWSElasticBeanstalkClientBuilder
 
-case class ElasticBeanstalkVersionsDalek(implicit region: Region)  extends RxDalek[ApplicationVersionDescription] {
+case class ElasticBeanstalkVersionsDalek()  extends RxDalek[ApplicationVersionDescription] {
    val eb = AWSElasticBeanstalkClientBuilder.standard().withRegion(regions).build()
 
   override def observe:Observable[ApplicationVersionDescription] = eb.describeApplicationVersions()

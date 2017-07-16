@@ -5,7 +5,7 @@ import com.amazonaws.regions.Region
 import scala.collection.JavaConverters._
 import rx.lang.scala._
 
-case class SGRulesDalek (implicit region: Region) extends RxDalek[Tuple2[String,IpPermission]]  {
+case class SGRulesDalek () extends RxDalek[Tuple2[String,IpPermission]]  {
   val ec2 = AmazonEC2ClientBuilder.standard().withRegion(regions).build()
   type Ingress = Tuple2[String,IpPermission]
   

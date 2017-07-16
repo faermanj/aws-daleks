@@ -4,11 +4,10 @@ import com.amazonaws.regions.Region
 import com.amazonaws.services.redshift._
 import com.amazonaws.services.redshift.model._
 import scala.collection.JavaConverters._
-import aws.daleks.Dalek
 import aws.daleks.RxDalek
 
 
-case class RedshiftDalek (implicit region: Region) extends RxDalek[Cluster] {
+case class RedshiftDalek () extends RxDalek[Cluster] {
   val redshift = AmazonRedshiftClientBuilder.standard().withRegion(regions).build()
   
   override def list = redshift

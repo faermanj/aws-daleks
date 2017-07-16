@@ -13,7 +13,7 @@ import com.amazonaws.services.identitymanagement.model.RemoveRoleFromInstancePro
 import aws.daleks.RxDalek
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder
 
-case class IAMInstanceProfilesDalek(implicit region: Region) extends RxDalek[InstanceProfile] {
+case class IAMInstanceProfilesDalek() extends RxDalek[InstanceProfile] {
   val iam = AmazonIdentityManagementClientBuilder.defaultClient()
 
   override def list(): List[InstanceProfile] = iam.listInstanceProfiles().getInstanceProfiles

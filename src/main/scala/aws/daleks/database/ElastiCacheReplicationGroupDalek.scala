@@ -12,7 +12,7 @@ import com.amazonaws.services.elasticache.AmazonElastiCacheClientBuilder
 
 //TODO: Consider pagination
 //TODO: Delete cache clusters with replication group
-case class ElastiCacheReplicationGroupDalek(implicit region: Region) extends RxDalek[ReplicationGroup] {
+case class ElastiCacheReplicationGroupDalek() extends RxDalek[ReplicationGroup] {
   
   val ecache = AmazonElastiCacheClientBuilder.standard().withRegion(regions).build()
 

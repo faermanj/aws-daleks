@@ -19,7 +19,7 @@ import com.amazonaws.services.identitymanagement.model.Role
 import aws.daleks.RxDalek
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder
 
-case class IAMRolesDalek(implicit region: Region) extends RxDalek[Role] {
+case class IAMRolesDalek() extends RxDalek[Role] {
   val iam = AmazonIdentityManagementClientBuilder.defaultClient()
 
   override def list(): List[Role] = iam.listRoles().getRoles

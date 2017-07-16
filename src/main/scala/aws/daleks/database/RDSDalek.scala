@@ -9,7 +9,7 @@ import rx.lang.scala._
 import aws.daleks.RxDalek
 import com.amazonaws.services.rds.AmazonRDSClientBuilder
 
-case class RDSDalek(implicit region: Region) extends RxDalek[DBInstance] {
+case class RDSDalek() extends RxDalek[DBInstance] {
   val rds = AmazonRDSClientBuilder.standard().withRegion(regions).build()
   
   override def observe:Observable[DBInstance] = rds.describeDBInstances

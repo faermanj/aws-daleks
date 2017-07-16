@@ -11,7 +11,7 @@ import com.amazonaws.services.ec2.AmazonEC2ClientBuilder
 import com.amazonaws.services.ec2.model.DeregisterImageRequest
 import com.amazonaws.services.ec2.model.DescribeImagesRequest
 
-case class EC2ImagesDalek(implicit region: Region) extends RxDalek[Image] {
+case class EC2ImagesDalek() extends RxDalek[Image] {
   val ec2 = AmazonEC2ClientBuilder.standard().withRegion(regions).build()
   
   override def list() = ec2.describeImages(new DescribeImagesRequest().withOwners("self")).getImages

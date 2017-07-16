@@ -9,7 +9,7 @@ import com.amazonaws.services.cloudformation.AmazonCloudFormationClientBuilder
 import aws.daleks.RxDalek
 
 //TODO: Consider pagination
-case class CloudFormationDalek(implicit region: Region) extends RxDalek[Stack] {
+case class CloudFormationDalek() extends RxDalek[Stack] {
   def cfn = AmazonCloudFormationClientBuilder.standard().withRegion(regions).build()
 
   override def observe: Observable[Stack] = cfn.describeStacks.getStacks.asScala.toObservable

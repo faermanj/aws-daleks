@@ -9,7 +9,7 @@ import com.amazonaws.services.elasticbeanstalk.model.TerminateEnvironmentRequest
 import aws.daleks.RxDalek
 import com.amazonaws.services.elasticbeanstalk.AWSElasticBeanstalkClientBuilder
 
-case class ElasticBeanstalkEnvironmentDalek(implicit region: Region)  extends RxDalek[EnvironmentDescription] {
+case class ElasticBeanstalkEnvironmentDalek()  extends RxDalek[EnvironmentDescription] {
   val eb = AWSElasticBeanstalkClientBuilder.standard().withRegion(regions).build()
 
   override def observe:Observable[EnvironmentDescription] = eb.describeEnvironments

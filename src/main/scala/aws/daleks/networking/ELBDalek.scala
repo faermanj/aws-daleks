@@ -9,7 +9,7 @@ import rx.lang.scala._
 import aws.daleks.RxDalek
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClientBuilder
 
-case class ELBDalek(implicit region: Region) extends RxDalek[LoadBalancerDescription] {
+case class ELBDalek() extends RxDalek[LoadBalancerDescription] {
   val elb = AmazonElasticLoadBalancingClientBuilder.standard().withRegion(regions).build()
   
   override def observe:Observable[LoadBalancerDescription] = elb.describeLoadBalancers

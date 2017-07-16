@@ -13,25 +13,26 @@ import aws.daleks.security.IAMUserDalek
 import aws.daleks.security.IAMInstanceProfilesDalek
 import aws.daleks.management.CloudFormationDalek
 import aws.daleks.networking.CloudFrontDalek
+import aws.daleks.storage.S3BucketDalek
 
-case class AccountDalek() {
+class AccountDalek() extends Dalek[String] {
   val excludedRegions = List(GovCloud,CN_NORTH_1)
   val regionss = Regions.values diff excludedRegions
-  
-  def fly = {
+ 
+  override def fly() = {
     flyRegions
     flyGlobal
   }
 
   def flyRegions = 
-    regionss.map {Region.getRegion}
-            .map {implicit region => RegionDalek()}
-            .foreach { _.fly }
-            
-  def flyGlobal =  List(CloudFrontDalek()(null)).foreach(_.fly)
-  def flyGlobal2 = List(
-      IAMInstanceProfilesDalek()(null),
-      IAMUserDalek()(null),
-      IAMRolesDalek()(null)
+    regionss.map { Region.getRegion }
+            .foreach { region => RegionDalek().fly(region) }
+  
+  def flyGlobal = List(
+      CloudFrontDalek(),
+      S3BucketDalek(),
+      IAMInstanceProfilesDalek(),
+      IAMUserDalek(),
+      IAMRolesDalek()
   ).foreach(_.fly)
 }

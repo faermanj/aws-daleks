@@ -7,7 +7,7 @@ import com.amazonaws.services.autoscaling._
 import com.amazonaws.services.autoscaling.model._
 import aws.daleks.RxDalek
 
-case class EC2LaunchConfigurationDalek(implicit region: Region)  extends RxDalek[LaunchConfiguration] {
+case class EC2LaunchConfigurationDalek()  extends RxDalek[LaunchConfiguration] {
   def as = AmazonAutoScalingClientBuilder.standard().withRegion(regions).build()
  
   override def observe:Observable[LaunchConfiguration] =  as.describeLaunchConfigurations()

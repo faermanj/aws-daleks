@@ -17,7 +17,7 @@ import com.amazonaws.services.ec2.model.KeyPair
 import com.amazonaws.services.ec2.model.DeleteKeyPairRequest
 import com.amazonaws.services.ec2.model.KeyPairInfo
 
-case class EC2KeysDalek(implicit region: Region) extends RxDalek[KeyPairInfo] {
+case class EC2KeysDalek() extends RxDalek[KeyPairInfo] {
   val ec2 = AmazonEC2ClientBuilder.standard().withRegion(regions).build()
 
   override def list() = ec2.describeKeyPairs().getKeyPairs

@@ -14,7 +14,7 @@ import com.amazonaws.services.ec2.model.Address
 import com.amazonaws.services.ec2.model.ReleaseAddressRequest
 
 //TODO Do not try to release associated adresses
-case class EC2EIPDalek(implicit region: Region) extends RxDalek[Address] {
+case class EC2EIPDalek() extends RxDalek[Address] {
   val ec2 = AmazonEC2ClientBuilder.standard().withRegion(regions).build()
   
   override def list() = ec2.describeAddresses

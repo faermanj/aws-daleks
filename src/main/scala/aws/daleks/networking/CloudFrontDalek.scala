@@ -16,9 +16,9 @@ import com.amazonaws.services.cloudfront.model.DistributionConfig
 import com.amazonaws.services.cloudfront.model.DeleteDistributionRequest
 import com.amazonaws.services.cloudfront.model.GetDistributionConfigRequest
 
-case class CloudFrontDalek(implicit region: Region) extends RxDalek[DistributionSummary] {
+case class CloudFrontDalek() extends RxDalek[DistributionSummary] {
 
-  val cloudfront = AmazonCloudFrontClientBuilder.standard().build()
+  val cloudfront = AmazonCloudFrontClientBuilder.standard().withRegion("us-east-1").build()
 
   override def list() = cloudfront.listDistributions(new ListDistributionsRequest()).getDistributionList().getItems
   override def exterminate(ar: DistributionSummary) = {

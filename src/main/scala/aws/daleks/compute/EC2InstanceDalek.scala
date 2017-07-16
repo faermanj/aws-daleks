@@ -9,7 +9,7 @@ import aws.daleks.security.IAM
 import aws.daleks.RxDalek
 import aws.daleks.EC2
 
-case class EC2InstanceDalek(implicit region: Region) extends RxDalek[Instance] {
+case class EC2InstanceDalek() extends RxDalek[Instance] {
   val ec2 = AmazonEC2ClientBuilder.standard().withRegion(regions).build()
 
   def instances = ec2.describeInstances
