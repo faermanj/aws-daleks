@@ -12,10 +12,12 @@ import com.amazonaws.services.s3.model.SetBucketVersioningConfigurationRequest
 import aws.daleks.RxDalek
 import rx.lang.scala.Observable
 import rx.lang.scala.ObservableExtensions
+import aws.daleks.Dalek
+import com.amazonaws.regions.Regions
 
-case class S3BucketDalek() extends RxDalek[Bucket] {
+case class S3BucketDalek() extends Dalek[Bucket] {
   
-  val s3 = AmazonS3ClientBuilder.standard().withRegion(regions).build()
+  val s3 = AmazonS3ClientBuilder.standard().withRegion(Regions.US_EAST_1).build()
 
   def regionOf(bucket:Bucket) = 
     S3Region.fromValue(s3.getBucketLocation(bucket.getName)).toAWSRegion()
@@ -29,17 +31,17 @@ case class S3BucketDalek() extends RxDalek[Bucket] {
   )
   
   override def exterminate(bucket: Bucket) = {
+    val bucketRegion = regionOf(bucket)
+    val s3reg = AmazonS3ClientBuilder.standard().withRegion(bucketRegion.getName).build()
     val bucketName = bucket.getName
-    s3.setRegion(regionOf(bucket))
-    s3.setBucketVersioningConfiguration(
+    S3ObjectVersionDalek(bucket,bucketRegion).fly
+    s3reg.setRegion(bucketRegion)
+    s3reg.setBucketVersioningConfiguration(
           new SetBucketVersioningConfigurationRequest(bucket.getName,
               new BucketVersioningConfiguration(BucketVersioningConfiguration.SUSPENDED)))
-    s3.deleteBucketPolicy(bucketName)
-    s3.deleteBucket(bucketName)
+    s3reg.deleteBucketPolicy(bucketName)
+    s3reg.deleteBucket(bucketName)
   }
   
-  override def flyDependencies(bucket: Bucket) = List(
-      S3ObjectVersionDalek(bucket).withRegion(region)
-   ).foreach(_.fly)
 
 }

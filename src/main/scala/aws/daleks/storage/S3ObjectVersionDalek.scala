@@ -10,8 +10,8 @@ import scala.collection.JavaConverters._
 import com.amazonaws.services.s3.model.Bucket
 import aws.daleks.RxDalek
 
-case class S3ObjectVersionDalek(bucket: Bucket) extends RxDalek[S3VersionSummary] {
-  val s3 = AmazonS3ClientBuilder.standard().withRegion(region.getName).build()
+case class S3ObjectVersionDalek(bucket: Bucket, reg:Region) extends RxDalek[S3VersionSummary] {
+  val s3 = AmazonS3ClientBuilder.standard().withRegion(reg.getName).build()
 
   def streamVersions = versions(s3.listVersions(new ListVersionsRequest()))
 

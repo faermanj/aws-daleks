@@ -45,7 +45,7 @@ class Dalek[T] {
   } match {
     case Success(s) => "exterminated"
     case Failure(e) => {
-      //e.printStackTrace()
+      e.printStackTrace()
       s"failed[${e.getMessage}]"
     }
   }
