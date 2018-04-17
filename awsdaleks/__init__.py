@@ -78,7 +78,7 @@ def kill(resource):
         resource.result += result
 
 
-def main():
+def main(exterminate=False):
     seed = target("aws")
     work = collections.deque([seed])
     while work:
@@ -88,5 +88,6 @@ def main():
             work.extend(children)
             print(resource, "=>", children)
         else:
-            kill(resource)
+            if exterminate:
+                kill(resource)
             print(resource)
