@@ -1,5 +1,9 @@
 import collections
 
+UNHARMED = "O"
+MAPPED = "%"
+EXTERMINATED = "X"
+
 mappers = {}
 killers = {}
 
@@ -9,7 +13,8 @@ class Target:
         self.rtype = rtype
         self.rnames = rnames
         self.extras = extras
-        self.result = None
+        self.result = UNHARMED
+        self.record = []
 
     def __str__(self):
         buf = self.rtype
@@ -22,6 +27,11 @@ class Target:
 
     def __repr__(self):
         return self.__str__()
+
+    def log(self, farg, *args):
+        self.record.append(farg)
+        for arg in args:
+            self.record.append(arg)
 
 
 def mapper(rtype, mapper):
@@ -52,11 +62,12 @@ def childrenOf(resource):
     children = []
     if (mapper):
         children = mapper(resource)
+        resource.result += MAPPED
     return children
 
 
 def kill(resource):
-    result = resource
+    result = ""
     rtype = resource.rtype
     killer = killers.get(rtype)
     if killer:
@@ -64,7 +75,7 @@ def kill(resource):
             result = killer(resource)
         except Exception as e:
             result = e
-        resource.result = result
+        resource.result += result
 
 
 def main():
@@ -78,4 +89,4 @@ def main():
             print(resource, "=>", children)
         else:
             kill(resource)
-            print(resource, "X")
+            print(resource)

@@ -1,4 +1,4 @@
-from awsdaleks import killer
+from awsdaleks import killer, EXTERMINATED
 
 import boto3
 s3 = boto3.client('s3')
@@ -13,9 +13,10 @@ def mkargs(res):
 
 def _killer(res):
     bucketName = res.rnames
-    result = s3.delete_bucket(
-        Bucket=bucketName)
-    return result
+    r0 = s3.delete_bucket_policy(Bucket=bucketName)
+    r1 = s3.delete_bucket(Bucket=bucketName)
+    res.log(r0, r1)
+    return EXTERMINATED
 
 
 killer("s3_empty_bucket", lambda r: _killer(r))
