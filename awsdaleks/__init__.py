@@ -9,8 +9,9 @@ killers = {}
 
 
 class Target:
-    def __init__(self, rtype, rnames, extras):
+    def __init__(self, rtype, region_name, rnames, extras):
         self.rtype = rtype
+        self.region_name = region_name
         self.rnames = rnames
         self.extras = extras
         self.result = UNHARMED
@@ -19,8 +20,13 @@ class Target:
     def __str__(self):
         buf = self.rtype
         if self.rnames:
-            buf += "@"
+            buf += " | "
             buf += str(self.rnames)
+
+        if "ExtraStr" in self.extras:
+            buf += " | "
+            buf += self.extras["ExtraStr"]
+
         if self.result:
             buf += "("+str(self.result)+")"
         return buf
@@ -28,10 +34,11 @@ class Target:
     def __repr__(self):
         return self.__str__()
 
-    def log(self, farg, *args):
-        self.record.append(farg)
-        for arg in args:
-            self.record.append(arg)
+
+def log(self, farg, *args):
+    self.record.append(farg)
+    for arg in args:
+        self.record.append(arg)
 
 
 def mapper(rtype, mapper):
@@ -42,8 +49,12 @@ def killer(rtype, killer):
     killers[rtype] = killer
 
 
-def target(rtype, rname="", extras={}):
-    return Target(rtype, rname, extras)
+def target(rtype, region_name="us-east-1", resource_names=[], extras={}):
+    return Target(rtype, region_name, resource_names, extras)
+
+
+def targets(*rtypes):
+    return list(map(lambda r: target(r), rtypes))
 
 
 def loadModule(rtype):
@@ -74,11 +85,18 @@ def kill(resource):
         try:
             result = killer(resource)
         except Exception as e:
-            result = e
+            print(e)
+            result = "o"
+            raise
         resource.result += result
 
 
 def main(exterminate=False):
+    if exterminate:
+        print("EXTEMINATE")
+    else:
+        print("PEACEE")
+
     seed = target("aws")
     work = collections.deque([seed])
     while work:
@@ -86,7 +104,7 @@ def main(exterminate=False):
         children = childrenOf(resource)
         if children:
             work.extend(children)
-            print(resource, "=>", children)
+            print(resource, "=>", len(children))
         else:
             if exterminate:
                 kill(resource)

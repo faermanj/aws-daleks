@@ -4,18 +4,10 @@ import boto3
 s3 = boto3.client('s3')
 
 
-def mkargs(res):
-    return {
-        'Key': res[0],
-        'VersionId': res[1]
-    }
-
-
 def _killer(res):
-    bucketName = res.rnames
-    r0 = s3.delete_bucket_policy(Bucket=bucketName)
-    r1 = s3.delete_bucket(Bucket=bucketName)
-    res.log(r0, r1)
+    bucketName = res.rnames[0]
+    s3.delete_bucket_policy(Bucket=bucketName)
+    s3.delete_bucket(Bucket=bucketName)
     return EXTERMINATED
 
 

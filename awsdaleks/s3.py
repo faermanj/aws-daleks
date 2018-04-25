@@ -4,7 +4,7 @@ s3 = boto3.client('s3')
 
 
 def mkbucket(bucket):
-    return target("s3_bucket", bucket['Name'])
+    return target("s3_bucket", resource_names=[bucket['Name']])
 
 
 def _mapper(t):

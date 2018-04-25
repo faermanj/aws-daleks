@@ -16,15 +16,23 @@ def list_objects(bucketName):
     objects = list(map(mkversion, versions))
     result = []
     if objects:
-        result = [target("s3_objects", objects, extras={
-                         "bucket-name": bucketName})]
+        result = [target("s3_objects",
+                         region_name="us-east-1",
+                         resource_names=objects,
+                         extras={
+                             "bucket-name": bucketName
+                         })]
     return result
 
 
 def _mapper(bucket):
-    bucketName = bucket.rnames
+    bucketName = bucket.rnames[0]
+    if not bucketName:
+        return []
     objects = list_objects(bucketName)
-    empty_bucket = target("s3_empty_bucket", bucketName)
+    empty_bucket = target("s3_empty_bucket",
+                          region_name="us-east-1",
+                          resource_names=[bucketName])
     return objects + [empty_bucket]
 
 
