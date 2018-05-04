@@ -12,7 +12,7 @@ def mkargs(res):
 
 
 def _killer(res):
-    names = res.resource_names
+    names = res.rnames
     objects = list(map(mkargs, names))
     bucketName = res.extras["bucket-name"]
     delete = {

@@ -8,3 +8,6 @@
 /bin/
 /.*
 *.pyc
+__pycache__/
+*.py[cod]
+*.pyc

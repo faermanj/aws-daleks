@@ -1,8 +1,12 @@
 import collections
 
-UNHARMED = "O"
-MAPPED = "%"
-EXTERMINATED = "X"
+import logging
+logger = logging.getLogger('aws-daleks')
+
+UNHARMED = "UNHARMED"
+MAPPED = "MAPPED"
+EXTERMINATED = "EXTERMINATED"
+EXCEPTION = "EXCEPTION"
 
 mappers = {}
 killers = {}
@@ -49,7 +53,7 @@ def killer(rtype, killer):
     killers[rtype] = killer
 
 
-def target(rtype, region_name="us-east-1", resource_names=[], extras={}):
+def target(rtype, region_name="", resource_names=[], extras={}):
     return Target(rtype, region_name, resource_names, extras)
 
 
@@ -73,7 +77,7 @@ def childrenOf(resource):
     children = []
     if (mapper):
         children = mapper(resource)
-        resource.result += MAPPED
+        resource.result = MAPPED
     return children
 
 
@@ -85,17 +89,15 @@ def kill(resource):
         try:
             result = killer(resource)
         except Exception as e:
-            print(e)
-            result = "o"
+            result = EXCEPTION
             raise
-        resource.result += result
+        resource.result = str(result)
 
 
 def main(exterminate=False):
-    if exterminate:
-        print("EXTEMINATE")
-    else:
-        print("PEACEE")
+    if (not exterminate):
+        logger.warn(
+            "Running in dry-run mode, use the exterminate argument to dispatch the daleks.   ")
 
     seed = target("aws")
     work = collections.deque([seed])
@@ -104,8 +106,15 @@ def main(exterminate=False):
         children = childrenOf(resource)
         if children:
             work.extend(children)
-            print(resource, "=>", len(children))
         else:
             if exterminate:
                 kill(resource)
-            print(resource)
+        rtype = str(resource.rtype)
+        region_name = str(resource.region_name)
+        if (resource.rnames and len(resource.rnames) > 1):
+            rnames = '[{}]'.format(len(resource.rnames))
+        else:
+            rnames = str(resource.rnames)
+        result = resource.result
+        print('{0:<8} {1:<32} {2:>8} {3:<32}'.format(
+            result, rtype, region_name, rnames))
