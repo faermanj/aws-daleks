@@ -1,48 +1,22 @@
 import collections
-
+import boto3
 import logging
 logger = logging.getLogger('aws-daleks')
 
-UNHARMED = "UNHARMED"
-MAPPED = "MAPPED"
-EXTERMINATED = "EXTERMINATED"
-EXCEPTION = "EXCEPTION"
+UNHARMED = "0"
+MAPPED = "*"
+EXTERMINATED = "X"
+EXCEPTION = "?"
 
 mappers = {}
 killers = {}
 
-
-class Target:
-    def __init__(self, rtype, region_name, rnames, extras):
-        self.rtype = rtype
-        self.region_name = region_name
-        self.rnames = rnames
-        self.extras = extras
-        self.result = UNHARMED
-        self.record = []
-
-    def __str__(self):
-        buf = self.rtype
-        if self.rnames:
-            buf += " | "
-            buf += str(self.rnames)
-
-        if "ExtraStr" in self.extras:
-            buf += " | "
-            buf += self.extras["ExtraStr"]
-
-        if self.result:
-            buf += "("+str(self.result)+")"
-        return buf
-
-    def __repr__(self):
-        return self.__str__()
+session = boto3.session.Session()
+services = session.get_available_services()
 
 
-def log(self, farg, *args):
-    self.record.append(farg)
-    for arg in args:
-        self.record.append(arg)
+def isService(str):
+    return str in services
 
 
 def mapper(rtype, mapper):
@@ -53,8 +27,13 @@ def killer(rtype, killer):
     killers[rtype] = killer
 
 
-def target(rtype, region_name="", resource_names=[], extras={}):
-    return Target(rtype, region_name, resource_names, extras)
+def target(type, region=None, names=[], extras={}):
+    return {
+        "type": type,
+        "region": region,
+        "names": names,
+        "extras": extras
+    }
 
 
 def targets(*rtypes):
@@ -70,28 +49,28 @@ def loadModule(rtype):
 
 
 def childrenOf(resource):
-    rtype = resource.rtype
+    rtype = resource["type"]
     if not rtype in mappers:
         loadModule(rtype)
     mapper = mappers.get(rtype)
     children = []
     if (mapper):
         children = mapper(resource)
-        resource.result = MAPPED
+        resource["result"] = MAPPED
     return children
 
 
 def kill(resource):
     result = ""
-    rtype = resource.rtype
+    rtype = resource["type"]
     killer = killers.get(rtype)
     if killer:
         try:
             result = killer(resource)
         except Exception as e:
             result = EXCEPTION
-            raise
-        resource.result = str(result)
+            raise e
+        resource["result"] = str(result)
 
 
 def main(exterminate=False):
@@ -103,18 +82,30 @@ def main(exterminate=False):
     work = collections.deque([seed])
     while work:
         resource = work.popleft()
-        children = childrenOf(resource)
-        if children:
-            work.extend(children)
+        rtype = resource["type"]
+        if isService(rtype) and (resource["region"] == None):
+            regions = boto3.session.Session().get_available_regions(rtype)
+            rservices = list(map(lambda sr: target(rtype, sr), regions))
+            work.extend(rservices)
         else:
-            if exterminate:
+            children = childrenOf(resource)
+            if children:
+                work.extend(children)
+            elif exterminate:
                 kill(resource)
-        rtype = str(resource.rtype)
-        region_name = str(resource.region_name)
-        if (resource.rnames and len(resource.rnames) > 1):
-            rnames = '[{}]'.format(len(resource.rnames))
-        else:
-            rnames = str(resource.rnames)
-        result = resource.result
-        print('{0:<8} {1:<32} {2:>8} {3:<32}'.format(
-            result, rtype, region_name, rnames))
+        print(tostr(resource))
+
+
+def tostr(target):
+    if not target:
+        return "-"
+    sres = str(target.get("result") or "?")
+    stype = str(target["type"])
+    sregion = str(target.get("region")or "")
+    names = target["names"]
+    snames = ""
+    if len(names) == 1:
+        snames = names[0]
+    elif len(names) > 1:
+        snames = "["+len(names)+"]"
+    return "{} {:<24} {:<16} {:<8}".format(sres, stype, sregion, snames)

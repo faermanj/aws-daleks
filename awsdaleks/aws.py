@@ -5,8 +5,8 @@ import boto3
 def _mapper(t):
     return targets(
         "cloudformation",
-        "s3",
-        "ec2"
+        "s3global",
+        "ec2",
     )
 
 

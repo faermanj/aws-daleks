@@ -16,7 +16,7 @@ def _killer(res):
     objects = list(map(mkargs, names))
     bucketName = res.extras["bucket-name"]
     delete = {
-        'Objects': objects,
+        'Objects': objects,∂
     }
     result = None
     if objects:

@@ -8,7 +8,7 @@ def mkversion(obj):
     return (obj['Key'], obj['VersionId'])
 
 
-def list_objects(bucketName):
+def list_objects(bucketName, region):
     kwargs = {'Bucket': bucketName}
     # TODO: Support large (>1000) buckets
     list_object_versions = s3.list_object_versions(**kwargs)
@@ -17,23 +17,27 @@ def list_objects(bucketName):
     result = []
     if objects:
         result = [target("s3_objects",
-                         region_name="us-east-1",
-                         resource_names=objects,
-                         extras={
+                         region,
+                         objects,
+                         {
                              "bucket-name": bucketName
                          })]
     return result
 
 
 def _mapper(bucket):
-    bucketName = bucket.rnames[0]
-    if not bucketName:
+    bucketNames = bucket.get("resource_names", [])
+    if len(bucketNames) > 0:
+        bucketName = bucketNames[0]
+        region = bucket["region"]
+        objects = list_objects(bucketName, region)
+        empty_bucket = target("s3_empty_bucket",
+                              bucket["region_name"],
+                              [bucketName])
+        targets = objects + [empty_bucket]
+        return targets
+    else:
         return []
-    objects = list_objects(bucketName)
-    empty_bucket = target("s3_empty_bucket",
-                          region_name="us-east-1",
-                          resource_names=[bucketName])
-    return objects + [empty_bucket]
 
 
 mapper("s3_bucket", lambda r: _mapper(r))
