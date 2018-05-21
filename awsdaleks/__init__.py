@@ -3,41 +3,46 @@ import boto3
 import logging
 logger = logging.getLogger('aws-daleks')
 
-UNHARMED = "0"
-MAPPED = "*"
-EXTERMINATED = "X"
-EXCEPTION = "?"
+from enum import Enum
 
-mappers = {}
-killers = {}
 
-session = boto3.session.Session()
-services = session.get_available_services()
+class Fate(Enum):
+    CHASED = ">"
+    UNHARMED = "O"
+    EXTERMINATED = "X"
+    EXCEPTION = "?"
+
+
+chasers = {}
+warriors = {}
+
+services = boto3.session.Session().get_available_services()
 
 
 def isService(str):
     return str in services
 
 
-def mapper(rtype, mapper):
-    mappers[rtype] = mapper
+def chaser(rtype, chaser):
+    chasers[rtype] = chaser
 
 
-def killer(rtype, killer):
-    killers[rtype] = killer
+def warrior(rtype, warrior):
+    warriors[rtype] = warrior
 
 
-def target(type, region=None, names=[], extras={}):
+def dalek(type, region=None, names=[], extras={}):
     return {
         "type": type,
         "region": region,
         "names": names,
-        "extras": extras
+        "extras": extras,
+        "result": Fate.UNHARMED.value
     }
 
 
-def targets(*rtypes):
-    return list(map(lambda r: target(r), rtypes))
+def newTarget(type, region=None, names=[], extras={}):
+    return dalek(type, region, names, extras)
 
 
 def loadModule(rtype):
@@ -48,58 +53,68 @@ def loadModule(rtype):
         None
 
 
-def childrenOf(resource):
-    rtype = resource["type"]
-    if not rtype in mappers:
+def chase(target):
+    rtype = target["type"]
+    if not rtype in chasers:
         loadModule(rtype)
-    mapper = mappers.get(rtype)
-    children = []
-    if (mapper):
-        children = mapper(resource)
-        resource["result"] = MAPPED
-    return children
-
-
-def kill(resource):
-    result = ""
-    rtype = resource["type"]
-    killer = killers.get(rtype)
-    if killer:
+    chaser = chasers.get(rtype)
+    leads = []
+    if chaser:
         try:
-            result = killer(resource)
+            leads = chaser(target)
+            target["result"] = len(leads)
         except Exception as e:
-            result = EXCEPTION
-            raise e
-        resource["result"] = str(result)
+            exception(target, e)
+    return leads
 
 
-def main(exterminate=False):
-    if (not exterminate):
+def exterminate(target):
+    rtype = target["type"]
+    warrior = warriors.get(rtype)
+    if warrior:
+        try:
+            warrior(target)
+            target["result"] = Fate.EXTERMINATED.value
+        except Exception as e:
+            exception(target, e)
+
+
+def exception(target, e):
+    target["result"] = Fate.EXCEPTION.value
+    target["exception"] = e
+    target["message"] = str(e)
+    print(e)
+    raise e
+
+
+def main(dryRun=True):
+    if (dryRun):
         logger.warn(
-            "Running in dry-run mode, use the exterminate argument to dispatch the daleks.   ")
+            "Running in dry-run mode, use the 'exterminate' argument to dispatch the daleks.   ")
 
-    seed = target("aws")
+    seed = dalek("aws")
     work = collections.deque([seed])
     while work:
-        resource = work.popleft()
-        rtype = resource["type"]
-        if isService(rtype) and (resource["region"] == None):
+        target = work.popleft()
+        rtype = target["type"]
+        if isService(rtype) and (target["region"] == None):
             regions = boto3.session.Session().get_available_regions(rtype)
-            rservices = list(map(lambda sr: target(rtype, sr), regions))
+            rservices = list(map(lambda sr: newTarget(rtype, sr), regions))
             work.extend(rservices)
         else:
-            children = childrenOf(resource)
-            if children:
-                work.extend(children)
-            elif exterminate:
-                kill(resource)
-        print(tostr(resource))
+            leads = chase(target)
+            if leads:
+                work.extend(leads)
+            elif not dryRun:
+                exterminate(target)
+        print(tostr(target))
 
 
 def tostr(target):
     if not target:
         return "-"
-    sres = str(target.get("result") or "?")
+    result = target.get("result", "??")
+    sres = str(result)
     stype = str(target["type"])
     sregion = str(target.get("region")or "")
     names = target["names"]
@@ -107,5 +122,5 @@ def tostr(target):
     if len(names) == 1:
         snames = names[0]
     elif len(names) > 1:
-        snames = "["+len(names)+"]"
+        snames = "["+str(len(names))+"]"
     return "{} {:<24} {:<16} {:<8}".format(sres, stype, sregion, snames)

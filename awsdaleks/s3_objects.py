@@ -1,4 +1,4 @@
-from awsdaleks import killer
+from awsdaleks import warrior
 
 import boto3
 s3 = boto3.client('s3')
@@ -11,12 +11,12 @@ def mkargs(res):
     }
 
 
-def _killer(res):
+def exterminate(res):
     names = res.rnames
     objects = list(map(mkargs, names))
     bucketName = res.extras["bucket-name"]
     delete = {
-        'Objects': objects,∂
+        'Objects': objects,
     }
     result = None
     if objects:
@@ -26,4 +26,4 @@ def _killer(res):
     return result
 
 
-killer("s3_objects", lambda r: _killer(r))
+warrior("s3_objects", lambda r: exterminate(r))

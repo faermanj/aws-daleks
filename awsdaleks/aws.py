@@ -1,13 +1,20 @@
-from awsdaleks import mapper, targets
+from awsdaleks import chaser, dalek
 import boto3
 
 
-def _mapper(t):
-    return targets(
-        "cloudformation",
-        "s3global",
-        "ec2",
+def daleks(*args):
+    return [dalek(arg) for arg in args]
+
+
+def chase(target):
+    return daleks(
+        #"iot",
+        "lambda",
+        #        dalek("cloudformation"),
+        #   "ec2"  # ,
+        #        dalek("s3global"),
+        #        dalek("iam_users")
     )
 
 
-mapper("aws", lambda r: _mapper(r))
+chaser("aws", lambda r: chase(r))

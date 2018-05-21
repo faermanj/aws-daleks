@@ -1,20 +1,20 @@
-from awsdaleks import mapper, target
+from awsdaleks import chaser, newTarget
 import boto3
 
 service = "cloudformation"
 
 
 def mkstack(region, stack_summary):
-    return target("cloudformation_stack",
-                  region,
-                  [stack_summary['StackName']],
-                  {
-                      "StackStatus": stack_summary['StackStatus'],
-                      "ExtraStr": stack_summary['StackStatus'],
-                  })
+    return newTarget("cloudformation_stack",
+                     region,
+                     [stack_summary['StackName']],
+                     {
+                         "StackStatus": stack_summary['StackStatus'],
+                         "ExtraStr": stack_summary['StackStatus'],
+                     })
 
 
-def _mapper(t):
+def chase(t):
     region = t["region"]
     client = boto3.client(service, region_name=region)
     response = client.list_stacks(StackStatusFilter=[
@@ -24,4 +24,4 @@ def _mapper(t):
     return targets
 
 
-mapper("cloudformation", lambda r: _mapper(r))
+chaser("cloudformation", lambda r: chase(r))
